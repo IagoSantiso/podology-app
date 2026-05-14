@@ -22,28 +22,14 @@ export default function SelectPage() {
   const [step, setStep] = useState<'service' | 'date' | 'time'>('service')
 
   useEffect(() => {
-    // Cargar servicios
-    fetch('/api/slots?date=2099-01-01&serviceId=00000000-0000-0000-0000-000000000000')
+    fetch('/api/services')
+      .then(r => r.json())
+      .then(d => { if (d.services) setServices(d.services) })
       .catch(() => {})
 
-    fetch(`${window.location.origin}/api/slots?date=2099-01-01&serviceId=placeholder`)
-      .catch(() => {})
-
-    // Cargar servicios directamente desde Supabase público
-    import('@/lib/supabase-client').then(({ createSupabaseClient }) => {
-      const sb = createSupabaseClient()
-      sb.from('services').select('*').eq('is_active', true).then(({ data }) => {
-        if (data) setServices(data)
-      })
-    })
-
-    // Generar próximos 60 días
     const today = startOfDay(new Date())
     const days: Date[] = []
-    for (let i = 0; i < 60; i++) {
-      const d = addDays(today, i)
-      days.push(d)
-    }
+    for (let i = 0; i < 60; i++) days.push(addDays(today, i))
     setCalendarDays(days)
   }, [])
 

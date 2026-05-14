@@ -13,9 +13,8 @@ create table if not exists services (
 );
 
 insert into services (name, duration_minutes, price) values
-  ('Corte', 30, 15.00),
-  ('Barba', 20, 10.00),
-  ('Corte + Barba', 45, 22.00)
+  ('Corte', 30, 14.00),
+  ('Corte + Barba', 45, 18.00)
 on conflict do nothing;
 
 -- Disponibilidad semanal del barbero
