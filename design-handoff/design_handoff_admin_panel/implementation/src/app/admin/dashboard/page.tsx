@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   format, addDays, startOfWeek, addWeeks, subWeeks,
-  isToday, isSameDay,
+  isToday, parse, addMinutes, isBefore, isSameDay,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -17,7 +17,6 @@ interface Appointment {
   start_time: string
   end_time: string
   appointment_date: string
-  service_id: string
   status: string
   delay_minutes: number | null
   delay_notified: boolean
@@ -43,31 +42,18 @@ export default function DashboardPage() {
   const [view, setView] = useState<'list'|'timeline'>('list')
   const [openAptId, setOpenAptId] = useState<string | null>(null)
 
-  // Create modal
+  // Modals
   const [createModal, setCreateModal] = useState<{ date: string; time: string } | null>(null)
   const [createForm, setCreateForm] = useState({ client_name: '', client_email: '', client_phone: '', service_id: '', time: '' })
   const [createError, setCreateError] = useState('')
   const [createLoading, setCreateLoading] = useState(false)
 
-  // Delay modal
   const [delayModal, setDelayModal] = useState<{ aptId: string; clientName: string } | null>(null)
   const [delayMinutes, setDelayMinutes] = useState(15)
-
-  // Complete modal
   const [completeModal, setCompleteModal] = useState<{ aptId: string; clientName: string } | null>(null)
   const [barberNotes, setBarberNotes] = useState('')
-
-  // Edit modal
-  const [editModal, setEditModal] = useState<{ aptId: string; clientName: string } | null>(null)
-  const [editForm, setEditForm] = useState({ date: '', time: '', service_id: '', reschedule_note: '' })
-  const [editError, setEditError] = useState('')
-  const [editLoading, setEditLoading] = useState(false)
-
-  // Cancel modal
-  const [cancelModal, setCancelModal] = useState<{ aptId: string; clientName: string } | null>(null)
-  const [cancelNote, setCancelNote] = useState('')
-
   const [actionLoading, setActionLoading] = useState(false)
+
   const [notifPermission, setNotifPermission] = useState<string>('default')
   const lastCheckedRef = useRef(new Date())
 
@@ -125,11 +111,12 @@ export default function DashboardPage() {
     setNotifPermission(p)
   }
 
+  // Sorted appts
   const sorted = useMemo(() =>
     [...dayApts].sort((a,b) => a.start_time.localeCompare(b.start_time))
   , [dayApts])
 
-  // Bug fix: next confirmed = SIGUIENTE futura, no la PRIMERA del día
+  // ── Bug fix: next confirmed = SIGUIENTE futura, no la PRIMERA del día ──
   const now = new Date()
   const nowMin = now.getHours()*60 + now.getMinutes()
   const nextConfirmed = useMemo(() => {
@@ -173,25 +160,7 @@ export default function DashboardPage() {
     setCreateModal({ date: dateStr, time: slot })
   }
 
-  function openEdit(apt: Appointment) {
-    setEditForm({
-      date: apt.appointment_date,
-      time: apt.start_time.slice(0, 5),
-      service_id: apt.service_id ?? apt.services?.id ?? '',
-      reschedule_note: '',
-    })
-    setEditError('')
-    setEditModal({ aptId: apt.id, clientName: apt.client_name })
-    setOpenAptId(null)
-  }
-
-  function openCancel(apt: Appointment) {
-    setCancelNote('')
-    setCancelModal({ aptId: apt.id, clientName: apt.client_name })
-    setOpenAptId(null)
-  }
-
-  async function submitCreate(e: React.FormEvent<HTMLFormElement>) {
+  async function submitCreate(e: React.FormEvent) {
     e.preventDefault()
     setCreateError('')
     if (!createForm.client_name || !createForm.client_phone || !createForm.service_id) {
@@ -214,38 +183,7 @@ export default function DashboardPage() {
     setCreateModal(null); await loadDay(); await loadWeek()
   }
 
-  async function submitEdit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!editModal) return
-    setEditError('')
-    setEditLoading(true)
-    const res = await fetch(`/api/admin/appointments/${editModal.aptId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        appointment_date: editForm.date,
-        start_time: editForm.time,
-        service_id: editForm.service_id || undefined,
-        reschedule_note: editForm.reschedule_note || null,
-      }),
-    })
-    const data = await res.json()
-    setEditLoading(false)
-    if (!res.ok) { setEditError(data.error ?? 'Error al guardar'); return }
-    setEditModal(null); await loadDay(); await loadWeek()
-  }
-
-  async function submitCancel() {
-    if (!cancelModal) return
-    setActionLoading(true)
-    await fetch(`/api/admin/appointments/${cancelModal.aptId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'cancelled', cancel_note: cancelNote || null }),
-    })
-    setCancelModal(null); setCancelNote('')
-    await loadDay(); await loadWeek()
-    setActionLoading(false)
-  }
-
+  // Week strip
   const week = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const todayActive = isToday(selectedDate) && nextConfirmed
 
@@ -341,7 +279,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* CTA "Voy a llegar tarde" */}
+      {/* CTA "Voy a llegar tarde" — apunta a la siguiente cita futura */}
       {todayActive && nextConfirmed && (
         <div className="px-5 pt-3">
           <button
@@ -378,8 +316,7 @@ export default function DashboardPage() {
                 onToggle={() => setOpenAptId(openAptId === apt.id ? null : apt.id)}
                 onDelay={() => setDelayModal({ aptId: apt.id, clientName: apt.client_name })}
                 onComplete={() => setCompleteModal({ aptId: apt.id, clientName: apt.client_name })}
-                onEdit={() => openEdit(apt)}
-                onOpenCancel={() => openCancel(apt)}
+                onCancel={() => patchApt(apt.id, { status: 'cancelled' })}
                 actionLoading={actionLoading}
               />
             ))}
@@ -409,8 +346,6 @@ export default function DashboardPage() {
       </button>
 
       {/* ── MODALS ── */}
-
-      {/* Create */}
       {createModal && (
         <Modal onClose={() => setCreateModal(null)} title="Nueva cita">
           <form onSubmit={submitCreate} className="flex flex-col gap-3">
@@ -438,34 +373,6 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* Edit */}
-      {editModal && (
-        <Modal onClose={() => setEditModal(null)} title="Editar cita" subtitle={editModal.clientName}>
-          <form onSubmit={submitEdit} className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-2.5">
-              <Field label="Fecha"><input type="date" value={editForm.date} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} className={INPUT}/></Field>
-              <Field label="Hora"><input type="time" value={editForm.time} onChange={e => setEditForm(p => ({ ...p, time: e.target.value }))} className={INPUT}/></Field>
-            </div>
-            <Field label="Servicio">
-              <select value={editForm.service_id} onChange={e => setEditForm(p => ({ ...p, service_id: e.target.value }))} className={INPUT}>
-                {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Nota para el cliente (opcional)">
-              <textarea value={editForm.reschedule_note} onChange={e => setEditForm(p => ({ ...p, reschedule_note: e.target.value }))}
-                placeholder="Motivo del cambio, disculpas..." rows={2} className={`${INPUT} resize-none text-[12.5px]`}/>
-            </Field>
-            <p className="text-[10.5px] text-muted -mt-1">Si el cliente tiene email, recibirá un aviso con los nuevos datos.</p>
-            {editError && <p className="text-red-400 text-xs">{editError}</p>}
-            <div className="flex gap-2 mt-1">
-              <button type="button" onClick={() => setEditModal(null)} className={BTN_GHOST}>Cancelar</button>
-              <button type="submit" disabled={editLoading} className={`${BTN_PRIMARY} bg-gold text-bg`}>{editLoading ? 'Guardando...' : 'Guardar cambios'}</button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Delay */}
       {delayModal && (
         <Modal onClose={() => setDelayModal(null)} title="Avisar retraso"
           subtitle={<>WhatsApp a <span className="text-cream">{delayModal.clientName}</span></>}>
@@ -489,7 +396,6 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* Complete */}
       {completeModal && (
         <Modal onClose={() => { setCompleteModal(null); setBarberNotes('') }} title="Completar cita" subtitle={completeModal.clientName}>
           <Field label="Notas del corte (opcional)">
@@ -502,26 +408,6 @@ export default function DashboardPage() {
           </div>
         </Modal>
       )}
-
-      {/* Cancel with note */}
-      {cancelModal && (
-        <Modal onClose={() => setCancelModal(null)} title="Cancelar cita" subtitle={cancelModal.clientName}>
-          <p className="text-[12.5px] text-muted mb-3 -mt-1">
-            ¿Seguro que quieres cancelar esta cita? El cliente recibirá un email si tiene dirección registrada.
-          </p>
-          <Field label="Nota para el cliente (opcional)">
-            <textarea value={cancelNote} onChange={e => setCancelNote(e.target.value)}
-              placeholder="Motivo de la cancelación, disculpas..." rows={2} className={`${INPUT} resize-none text-[12.5px]`}/>
-          </Field>
-          <div className="flex gap-2 mt-3">
-            <button onClick={() => setCancelModal(null)} className={BTN_GHOST}>Volver</button>
-            <button onClick={submitCancel} disabled={actionLoading}
-              className={`${BTN_PRIMARY} bg-red-700 text-white`}>
-              {actionLoading ? 'Cancelando...' : 'Cancelar cita'}
-            </button>
-          </div>
-        </Modal>
-      )}
     </main>
   )
 }
@@ -529,10 +415,9 @@ export default function DashboardPage() {
 // ─────────────────────────────────────────────────────────────
 // AppointmentCard
 // ─────────────────────────────────────────────────────────────
-function AppointmentCard({ apt, now, isNext, open, onToggle, onDelay, onComplete, onEdit, onOpenCancel, actionLoading }:{
+function AppointmentCard({ apt, now, isNext, open, onToggle, onDelay, onComplete, onCancel, actionLoading }:{
   apt: Appointment; now: Date; isNext: boolean; open: boolean;
-  onToggle: () => void; onDelay: () => void; onComplete: () => void;
-  onEdit: () => void; onOpenCancel: () => void; actionLoading: boolean;
+  onToggle: () => void; onDelay: () => void; onComplete: () => void; onCancel: () => void; actionLoading: boolean;
 }) {
   const nowMin = now.getHours()*60 + now.getMinutes()
   const past = apt.status === 'completed' || slotToMin(apt.end_time) < nowMin
@@ -563,28 +448,20 @@ function AppointmentCard({ apt, now, isNext, open, onToggle, onDelay, onComplete
         </div>
         <StatusBadge apt={apt} isNext={isNext}/>
       </button>
-
-      {/* Expanded: actions for confirmed */}
       {open && !past && !cancelled && (
-        <div className="border-t border-border/60 px-3.5 py-2.5 flex flex-wrap gap-1.5 items-center bg-white/[0.012]">
-          <div className="flex items-center gap-1.5 w-full text-muted text-[11px] mb-1">
+        <div className="border-t border-border/60 px-3.5 py-2.5 flex gap-1.5 items-center bg-white/[0.012]">
+          <div className="flex items-center gap-1.5 flex-1 text-muted text-[11px]">
             <PhoneIcon className="w-4 h-4" /><span className="tabular-nums">{apt.client_phone}</span>
           </div>
           {apt.status === 'confirmed' && (
             <>
-              <Chip kind="ok"   onClick={onComplete}   disabled={actionLoading}>Completar</Chip>
-              <Chip kind="warn" onClick={onDelay}      disabled={actionLoading}>Retraso</Chip>
-              <Chip kind="edit" onClick={onEdit}       disabled={actionLoading}>Editar</Chip>
-              <Chip kind="bad"  onClick={onOpenCancel} disabled={actionLoading}>✕</Chip>
+              <Chip kind="ok"   onClick={onComplete} disabled={actionLoading}>Completar</Chip>
+              <Chip kind="warn" onClick={onDelay}    disabled={actionLoading}>Retraso</Chip>
+              <Chip kind="bad"  onClick={onCancel}   disabled={actionLoading}>✕</Chip>
             </>
-          )}
-          {(apt.status === 'delayed' || apt.status === 'completed') && (
-            <Chip kind="edit" onClick={onEdit} disabled={actionLoading}>Editar</Chip>
           )}
         </div>
       )}
-
-      {/* Expanded: delayed info */}
       {open && delayed && (
         <div className="border-t border-border/60 px-3.5 py-2.5 bg-orange-500/[0.05] flex items-center gap-2 text-[11.5px] text-orange-400">
           <ClockIcon className="w-3.5 h-3.5"/>
@@ -606,14 +483,11 @@ function StatusBadge({ apt, isNext }: { apt: Appointment; isNext: boolean }) {
   )
 }
 
-function Chip({ kind, onClick, disabled, children }: {
-  kind: 'ok'|'warn'|'bad'|'edit'; onClick:()=>void; disabled?:boolean; children:React.ReactNode
-}) {
+function Chip({ kind, onClick, disabled, children }: { kind:'ok'|'warn'|'bad'; onClick:()=>void; disabled?:boolean; children:React.ReactNode }) {
   const cls = {
     ok:   'text-green-400 bg-green-700/10 border-green-700/35',
     warn: 'text-orange-400 bg-orange-500/10 border-orange-500/35',
     bad:  'text-red-400 bg-red-900/10 border-red-900/35',
-    edit: 'text-gold bg-gold/10 border-gold/35',
   }[kind]
   return (
     <button onClick={onClick} disabled={disabled}
@@ -622,7 +496,7 @@ function Chip({ kind, onClick, disabled, children }: {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Timeline view
+// Timeline view (fallback for power-users)
 // ─────────────────────────────────────────────────────────────
 function TimelineView({ appts, availability, selectedDate, onCreate }: {
   appts: Appointment[]; availability: {day_of_week:number; start_time:string; end_time:string}[]; selectedDate: Date; onCreate: (slot:string)=>void;
@@ -701,7 +575,7 @@ const BTN_GHOST = "flex-1 py-3 rounded-lg border border-border text-muted text-s
 const BTN_PRIMARY = "flex-1 py-3 rounded-lg font-semibold text-sm disabled:opacity-50"
 
 // ─────────────────────────────────────────────────────────────
-// Inline SVG icons
+// Tiny inline SVG icons (no extra deps)
 // ─────────────────────────────────────────────────────────────
 function Scissors({ className='' }) {
   return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>)

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import LogoCropModal from '@/components/LogoCropModal'
 
 interface Config {
   barber_phone: string
@@ -35,7 +34,6 @@ export default function SettingsPage() {
   const [saveError, setSaveError] = useState('')
   const [logoUploading, setLogoUploading] = useState(false)
   const [logoError, setLogoError] = useState('')
-  const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passError, setPassError] = useState('')
@@ -62,24 +60,16 @@ export default function SettingsPage() {
     setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
 
-  // Opens crop modal before upload
-  function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setCropSrc(reader.result as string)
-    reader.readAsDataURL(file)
-    if (fileRef.current) fileRef.current.value = ''
-  }
-
-  async function uploadCroppedBlob(blob: Blob) {
-    setCropSrc(null)
     setLogoUploading(true); setLogoError('')
-    const fd = new FormData(); fd.append('file', blob, 'logo.jpg')
+    const fd = new FormData(); fd.append('file', file)
     const res = await fetch('/api/admin/upload-logo', { method: 'POST', body: fd })
     if (res.ok) { const { url } = await res.json(); setConfig(p => ({ ...p, logo_url: url })) }
     else setLogoError('Error al subir el logo')
     setLogoUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function changePassword() {
@@ -261,14 +251,6 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
-
-      {cropSrc && (
-        <LogoCropModal
-          src={cropSrc}
-          onConfirm={uploadCroppedBlob}
-          onCancel={() => setCropSrc(null)}
-        />
-      )}
     </main>
   )
 }

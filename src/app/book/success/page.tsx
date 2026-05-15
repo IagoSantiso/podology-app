@@ -2,18 +2,30 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 function SuccessContent() {
   const params = useSearchParams()
   const id = params.get('id')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/public/config')
+      .then(r => r.json())
+      .then(d => setLogoUrl(d.logo_url ?? null))
+      .catch(() => {})
+  }, [])
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
       <div className="w-full max-w-sm">
-        {/* Icono animado */}
-        <div className="w-20 h-20 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-4xl mx-auto mb-8 animate-pulse">
-          ✂️
+        {/* Logo / icono */}
+        <div className="w-20 h-20 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-8 animate-pulse overflow-hidden">
+          {logoUrl ? (
+            <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-4xl">✂️</span>
+          )}
         </div>
 
         <h1 className="font-display text-4xl font-bold text-gold mb-3">¡Cita confirmada!</h1>

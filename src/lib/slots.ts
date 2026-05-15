@@ -1,7 +1,7 @@
 import { createSupabaseAdmin } from './supabase-server'
 import { format, parse, addMinutes, isBefore, isToday } from 'date-fns'
 
-export async function getAvailableSlots(date: Date, durationMinutes: number): Promise<string[]> {
+export async function getAvailableSlots(date: Date, durationMinutes: number, excludeAppointmentId?: string): Promise<string[]> {
   const supabase = createSupabaseAdmin()
   const dayOfWeek = date.getDay()
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -16,12 +16,18 @@ export async function getAvailableSlots(date: Date, durationMinutes: number): Pr
 
   if (!avail) return []
 
-  // 2. Citas existentes ese día
-  const { data: appointments } = await supabase
+  // 2. Citas existentes ese día (excluding current appointment when rescheduling)
+  let appointmentsQuery = supabase
     .from('appointments')
     .select('start_time, end_time')
     .eq('appointment_date', dateStr)
     .neq('status', 'cancelled')
+
+  if (excludeAppointmentId) {
+    appointmentsQuery = appointmentsQuery.neq('id', excludeAppointmentId)
+  }
+
+  const { data: appointments } = await appointmentsQuery
 
   // 3. Bloqueos puntuales ese día
   const { data: blocks } = await supabase
@@ -65,7 +71,7 @@ export async function getAvailableSlots(date: Date, durationMinutes: number): Pr
       slots.push(slotStr)
     }
 
-    current = addMinutes(current, 30)
+    current = addMinutes(current, 15)
   }
 
   return slots

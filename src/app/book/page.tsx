@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
 
+export const dynamic = 'force-dynamic'
+
 async function getPublicConfig() {
   try {
     const supabase = createSupabaseAdmin()
@@ -51,6 +53,17 @@ export default async function BookPage() {
             <div>
               <p className="font-semibold text-cream text-lg leading-tight">Iniciar sesión</p>
               <p className="text-muted text-sm mt-0.5">Accede a tu historial de cortes</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/bonos"
+          className="group block bg-bg-card border border-border rounded-xl p-6 hover:border-gold transition-colors duration-200">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center text-2xl shrink-0">🎟️</div>
+            <div>
+              <p className="font-semibold text-cream text-lg leading-tight">Ver bonos</p>
+              <p className="text-muted text-sm mt-0.5">Compra sesiones por adelantado</p>
             </div>
           </div>
         </Link>

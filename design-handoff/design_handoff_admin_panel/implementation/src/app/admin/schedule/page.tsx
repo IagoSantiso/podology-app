@@ -242,14 +242,14 @@ export default function SchedulePage() {
             }).map(h => {
               const on = holidays.some(x => x.holiday_date === h.holiday_date)
               return (
-                <div key={h.holiday_date} onClick={() => toggleHoliday(h, holidays, setHolidays)}
-                  className="flex items-center gap-3.5 py-2.5 border-b border-border/50 cursor-pointer">
+                <button key={h.holiday_date} onClick={() => toggleHoliday(h, holidays, setHolidays)}
+                  className="flex items-center gap-3.5 py-2.5 border-b border-border/50 text-left">
                   <span className={`font-display font-semibold text-sm w-14 tabular-nums ${on ? 'text-gold' : 'text-muted'}`}>
                     {fmtDate(h.holiday_date)}
                   </span>
                   <span className={`flex-1 text-[13px] ${on ? 'text-cream font-medium' : 'text-muted'}`}>{h.name}</span>
                   <Toggle on={on} onChange={() => toggleHoliday(h, holidays, setHolidays)} size={16}/>
-                </div>
+                </button>
               )
             })}
           </div>

@@ -11,11 +11,10 @@ export async function POST(req: NextRequest) {
 
   const supabase = createSupabaseAdmin()
 
-  const { data: apt } = await supabase
-    .from('appointments')
-    .select('*, services(name, price)')
-    .eq('id', appointmentId)
-    .single()
+  const [{ data: apt }, { data: cfg }] = await Promise.all([
+    supabase.from('appointments').select('*, services(name, price)').eq('id', appointmentId).single(),
+    supabase.from('barber_config').select('business_name, business_address').eq('id', 1).maybeSingle(),
+  ])
 
   if (!apt) {
     return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 })
@@ -30,7 +29,10 @@ export async function POST(req: NextRequest) {
       startTime: apt.start_time,
       price: apt.services?.price ?? null,
       appointmentId: apt.id,
+      rescheduleToken: apt.reschedule_token ?? '',
       isGuest: apt.is_guest,
+      businessName: cfg?.business_name ?? 'BarberApp',
+      businessAddress: cfg?.business_address ?? '',
     })
     return NextResponse.json({ ok: true })
   } catch (err) {

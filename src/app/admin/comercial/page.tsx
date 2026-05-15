@@ -35,7 +35,21 @@ type ClientBono = {
   bonos?: { name: string; total_sessions: number; services?: { name: string } | null } | null
 }
 
-type Tab = 'servicios' | 'bonos' | 'clientes'
+type BonoRequest = {
+  id: string
+  bono_id: string
+  buyer_name: string
+  buyer_email: string
+  buyer_phone: string
+  is_gift: boolean
+  recipient_name: string | null
+  recipient_email: string | null
+  status: 'pending' | 'paid' | 'cancelled'
+  created_at: string
+  bonos?: { name: string; total_sessions: number; price: number | null; services?: { name: string } | null } | null
+}
+
+type Tab = 'servicios' | 'bonos' | 'clientes' | 'solicitudes'
 
 export default function ComercialPage() {
   const router = useRouter()
@@ -54,6 +68,10 @@ export default function ComercialPage() {
   const [showAssign, setShowAssign] = useState(false)
   const [assignForm, setAssignForm] = useState({ bono_id: '', client_name: '', client_email: '', client_phone: '', notes: '' })
 
+  const [bonoRequests, setBonoRequests] = useState<BonoRequest[]>([])
+  const [reqFilter, setReqFilter] = useState<'all' | 'pending' | 'paid' | 'cancelled'>('pending')
+  const [reqLoading, setReqLoading] = useState(false)
+
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -70,6 +88,30 @@ export default function ComercialPage() {
     if (sr.ok) { const d = await sr.json(); setServices(d.services ?? []) }
     if (br.ok) { const d = await br.json(); setBonos(d.bonos ?? []) }
     if (cr.ok) { const d = await cr.json(); setClientBonos(d.clientBonos ?? []) }
+  }
+
+  async function loadRequests() {
+    setReqLoading(true)
+    const r = await fetch('/api/admin/bono-requests')
+    if (r.ok) { const d = await r.json(); setBonoRequests(d.requests ?? []) }
+    setReqLoading(false)
+  }
+
+  useEffect(() => {
+    if (tab === 'solicitudes') loadRequests()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
+
+  async function updateRequestStatus(id: string, status: 'paid' | 'cancelled') {
+    const r = await fetch('/api/admin/bono-requests', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    if (r.ok) {
+      setBonoRequests(prev => prev.map(req => req.id === id ? { ...req, status } : req))
+      if (status === 'paid') loadAll() // refresh client-bonos list too
+    }
   }
 
   // ── Services ──────────────────────────────────────────────────────────────
@@ -192,15 +234,15 @@ export default function ComercialPage() {
 
       {/* Inner tabs */}
       <div className="flex bg-bg-card border border-border rounded-xl p-1 mb-6 gap-1">
-        {(['servicios', 'bonos', 'clientes'] as Tab[]).map(t => (
+        {(['servicios', 'bonos', 'clientes', 'solicitudes'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
+            className={`flex-1 py-2 text-[11px] font-semibold rounded-lg transition-colors ${
               tab === t ? 'bg-gold text-bg' : 'text-muted hover:text-cream'
             }`}
           >
-            {t === 'clientes' ? 'Bonos clientes' : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === 'clientes' ? 'Clientes' : t === 'solicitudes' ? 'Solicitudes' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -514,6 +556,99 @@ export default function ComercialPage() {
               + Asignar bono a cliente
             </button>
           )}
+        </div>
+      )}
+      {/* ── SOLICITUDES ───────────────────────────────────────────────────── */}
+      {tab === 'solicitudes' && (
+        <div className="flex flex-col gap-4">
+          {/* Filter pills */}
+          <div className="flex gap-2">
+            {(['all', 'pending', 'paid', 'cancelled'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setReqFilter(f)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors border ${
+                  reqFilter === f
+                    ? 'bg-gold text-bg border-gold'
+                    : 'border-border text-muted hover:text-cream'
+                }`}
+              >
+                {f === 'all' ? 'Todas' : f === 'pending' ? 'Pendientes' : f === 'paid' ? 'Pagadas' : 'Canceladas'}
+              </button>
+            ))}
+          </div>
+
+          {reqLoading && <p className="text-muted text-sm text-center py-8">Cargando...</p>}
+
+          {!reqLoading && bonoRequests.filter(r => reqFilter === 'all' || r.status === reqFilter).length === 0 && (
+            <p className="text-center text-muted text-sm py-8">No hay solicitudes</p>
+          )}
+
+          {bonoRequests
+            .filter(r => reqFilter === 'all' || r.status === reqFilter)
+            .map(req => {
+              const bono = req.bonos
+              const isPending   = req.status === 'pending'
+              const isPaid      = req.status === 'paid'
+              const isCancelled = req.status === 'cancelled'
+              return (
+                <div
+                  key={req.id}
+                  className={`bg-bg-card border rounded-2xl p-4 ${isCancelled ? 'opacity-50 border-border/40' : 'border-border'}`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-cream truncate">{req.buyer_name}</p>
+                      <p className="text-xs text-muted truncate">{req.buyer_email} · {req.buyer_phone}</p>
+                    </div>
+                    <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                      isPending   ? 'bg-amber-500/15 text-amber-400' :
+                      isPaid      ? 'bg-green-500/15 text-green-400' :
+                                    'bg-border text-muted'
+                    }`}>
+                      {isPending ? 'Pendiente' : isPaid ? 'Pagado' : 'Cancelado'}
+                    </span>
+                  </div>
+
+                  <div className="bg-bg border border-border/60 rounded-xl px-3 py-2 mb-2">
+                    <p className="text-xs font-semibold text-gold truncate">{bono?.name ?? 'Bono'}</p>
+                    <p className="text-[11px] text-muted">
+                      {bono?.total_sessions} sesiones · {bono?.services?.name ?? 'Todos los servicios'}
+                      {bono?.price != null ? ` · ${bono.price.toFixed(2)} €` : ''}
+                    </p>
+                  </div>
+
+                  {req.is_gift && req.recipient_name && (
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-[10px] text-muted">🎁 Regalo para</span>
+                      <span className="text-[11px] font-semibold text-cream">{req.recipient_name}</span>
+                      {req.recipient_email && <span className="text-[10px] text-muted truncate">({req.recipient_email})</span>}
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-muted mb-3">
+                    {new Date(req.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+
+                  {isPending && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateRequestStatus(req.id, 'paid')}
+                        className="flex-1 bg-gold text-bg text-xs font-bold py-2 rounded-lg hover:bg-gold/90 transition-colors"
+                      >
+                        Marcar como pagado
+                      </button>
+                      <button
+                        onClick={() => updateRequestStatus(req.id, 'cancelled')}
+                        className="px-3 py-2 border border-border text-muted text-xs rounded-lg hover:text-red-400 hover:border-red-400/40 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
         </div>
       )}
     </main>

@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
   const end = addMinutes(start, service.duration_minutes)
   const endTime = format(end, 'HH:mm')
 
+  const rescheduleToken = crypto.randomUUID()
+
   const { data: appointment, error } = await supabase
     .from('appointments')
     .insert({
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
       is_guest: isGuest ?? true,
       client_user_id: clientUserId ?? null,
       status: 'confirmed',
+      reschedule_token: rescheduleToken,
     })
     .select()
     .single()
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   if (bonoRows && bonoRows.length > 0) {
     const cb = bonoRows[0]
-    const bonoServiceId = (cb.bonos as { service_id: string | null } | null)?.service_id
+    const bonoServiceId = (cb.bonos as unknown as { service_id: string | null } | null)?.service_id
     if (!bonoServiceId || bonoServiceId === serviceId) {
       const newRemaining = cb.remaining_sessions - 1
       await supabase
