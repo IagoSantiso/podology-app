@@ -49,5 +49,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No se pudo crear la cita' }, { status: 500 })
   }
 
+  // Auto-decrement active bono for this client + service
+  const { data: bonoRows } = await supabase
+    .from('client_bonos')
+    .select('id, remaining_sessions, bonos(service_id)')
+    .eq('client_email', clientEmail)
+    .eq('is_active', true)
+    .gt('remaining_sessions', 0)
+    .order('purchased_at', { ascending: true })
+    .limit(1)
+
+  if (bonoRows && bonoRows.length > 0) {
+    const cb = bonoRows[0]
+    const bonoServiceId = (cb.bonos as { service_id: string | null } | null)?.service_id
+    if (!bonoServiceId || bonoServiceId === serviceId) {
+      const newRemaining = cb.remaining_sessions - 1
+      await supabase
+        .from('client_bonos')
+        .update({ remaining_sessions: newRemaining, is_active: newRemaining > 0 })
+        .eq('id', cb.id)
+    }
+  }
+
   return NextResponse.json({ appointment }, { status: 201 })
 }
