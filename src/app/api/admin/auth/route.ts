@@ -20,11 +20,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
   }
 
-  return NextResponse.json({ ok: true })
+  const res = NextResponse.json({ ok: true })
+  res.cookies.set('admin_session', 'authenticated', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  })
+  return res
 }
 
 export async function DELETE() {
   const supabase = await createSupabaseServer()
   await supabase.auth.signOut()
-  return NextResponse.json({ ok: true })
+  const res = NextResponse.json({ ok: true })
+  res.cookies.delete('admin_session')
+  return res
 }
