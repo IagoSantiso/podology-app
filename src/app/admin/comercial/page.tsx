@@ -263,20 +263,26 @@ export default function ComercialPage() {
                       placeholder="Nombre"
                     />
                     <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={editingService.price ?? ''}
-                        onChange={e => setEditingService(p => ({ ...p, price: e.target.value ? parseFloat(e.target.value) : null }))}
-                        className={inputCls}
-                        placeholder="Precio (€)"
-                      />
-                      <input
-                        type="number"
-                        value={editingService.duration_minutes ?? ''}
-                        onChange={e => setEditingService(p => ({ ...p, duration_minutes: parseInt(e.target.value) }))}
-                        className={inputCls}
-                        placeholder="Duración (min)"
-                      />
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          value={editingService.price ?? ''}
+                          onChange={e => setEditingService(p => ({ ...p, price: e.target.value ? parseFloat(e.target.value) : null }))}
+                          className={`${inputCls} pr-8`}
+                          placeholder="Precio"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">€</span>
+                      </div>
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          value={editingService.duration_minutes ?? ''}
+                          onChange={e => setEditingService(p => ({ ...p, duration_minutes: parseInt(e.target.value) }))}
+                          className={`${inputCls} pr-10`}
+                          placeholder="Duración"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">min</span>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button onClick={saveService} disabled={saving}
@@ -328,20 +334,26 @@ export default function ComercialPage() {
                 placeholder="Nombre (ej. Corte de pelo)"
               />
               <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={newServiceForm.price}
-                  onChange={e => setNewServiceForm(p => ({ ...p, price: e.target.value }))}
-                  className={inputCls}
-                  placeholder="Precio (€)"
-                />
-                <input
-                  type="number"
-                  value={newServiceForm.duration_minutes}
-                  onChange={e => setNewServiceForm(p => ({ ...p, duration_minutes: e.target.value }))}
-                  className={inputCls}
-                  placeholder="Duración (min)"
-                />
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    value={newServiceForm.price}
+                    onChange={e => setNewServiceForm(p => ({ ...p, price: e.target.value }))}
+                    className={`${inputCls} pr-8`}
+                    placeholder="Precio"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">€</span>
+                </div>
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    value={newServiceForm.duration_minutes}
+                    onChange={e => setNewServiceForm(p => ({ ...p, duration_minutes: e.target.value }))}
+                    className={`${inputCls} pr-10`}
+                    placeholder="Duración"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">min</span>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={createService} disabled={saving}
