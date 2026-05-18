@@ -56,14 +56,14 @@ export default function AdminNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-bg-card border-t border-border z-50 safe-area-bottom">
-      <div className="flex justify-around max-w-lg mx-auto px-1" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="flex w-full max-w-lg mx-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {NAV_ITEMS.map(({ href, label, Icon }) => {
           const active = path.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-0.5 py-3 px-5 transition-colors ${active ? 'text-gold' : 'text-muted hover:text-cream'}`}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-3 px-1 min-w-0 transition-colors ${active ? 'text-gold' : 'text-muted hover:text-cream'}`}
             >
               <Icon active={active} />
               <span className="text-[10px] font-medium tracking-wide">{label}</span>

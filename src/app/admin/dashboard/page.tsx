@@ -554,7 +554,10 @@ function AppointmentCard({ apt, now, isNext, open, onToggle, onDelay, onComplete
   onEdit: () => void; onOpenCancel: () => void; actionLoading: boolean;
 }) {
   const nowMin = now.getHours()*60 + now.getMinutes()
-  const past = apt.status === 'completed' || slotToMin(apt.end_time) < nowMin
+  const todayStr = format(now, 'yyyy-MM-dd')
+  const aptIsToday = apt.appointment_date === todayStr
+  const aptIsPastDate = apt.appointment_date < todayStr
+  const past = apt.status === 'completed' || aptIsPastDate || (aptIsToday && slotToMin(apt.end_time) < nowMin)
   const delayed = apt.status === 'delayed'
   const cancelled = apt.status === 'cancelled'
 
@@ -584,7 +587,7 @@ function AppointmentCard({ apt, now, isNext, open, onToggle, onDelay, onComplete
       </button>
 
       {/* Expanded: actions for confirmed */}
-      {open && !past && !cancelled && (
+      {open && !cancelled && (
         <div className="border-t border-border/60 px-3.5 py-2.5 flex flex-wrap gap-1.5 items-center bg-white/[0.012]">
           <div className="flex items-center gap-1.5 w-full text-muted text-[11px] mb-1">
             <PhoneIcon className="w-4 h-4" /><span className="tabular-nums">{apt.client_phone}</span>
