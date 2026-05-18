@@ -2,33 +2,39 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { createSupabaseClient } from '@/lib/supabase-client'
 
-export default function AdminLoginPage() {
+export default function AdminUpdatePasswordPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirm) {
+      setError('Las contraseñas no coinciden')
+      return
+    }
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/admin/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
+    const supabase = createSupabaseClient()
+    const { error: updateError } = await supabase.auth.updateUser({ password })
 
-    if (res.ok) {
-      router.push('/admin/dashboard')
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setError(data.error ?? 'Email o contraseña incorrectos')
+    if (updateError) {
+      setError(updateError.message)
       setLoading(false)
+      return
     }
+
+    router.push('/admin/dashboard')
   }
 
   return (
@@ -36,28 +42,28 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-xs">
         <div className="text-center mb-10">
           <span className="text-4xl">✂️</span>
-          <h1 className="font-display text-3xl font-bold text-gold mt-3">Panel del barbero</h1>
+          <h1 className="font-display text-3xl font-bold text-gold mt-3">Nueva contraseña</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm text-muted mb-1.5">Email</label>
+            <label className="block text-sm text-muted mb-1.5">Nueva contraseña</label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
               autoFocus
               className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-sm text-muted mb-1.5">Contraseña</label>
+            <label className="block text-sm text-muted mb-1.5">Confirmar contraseña</label>
             <input
               type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
               placeholder="••••••••"
               className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold transition-colors"
             />
@@ -67,21 +73,12 @@ export default function AdminLoginPage() {
 
           <button
             type="submit"
-            disabled={loading || !email || !password}
+            disabled={loading || !password || !confirm}
             className="bg-gold hover:bg-gold-dark text-bg font-semibold rounded-lg py-3.5 transition-colors disabled:opacity-50"
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Guardando...' : 'Guardar contraseña'}
           </button>
         </form>
-
-        <div className="text-center mt-5">
-          <Link
-            href="/admin/reset-password"
-            className="text-sm text-muted hover:text-gold transition-colors"
-          >
-            ¿Olvidaste tu contraseña?
-          </Link>
-        </div>
       </div>
     </main>
   )

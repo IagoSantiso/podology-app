@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json()
-  const adminEmail = process.env.ADMIN_EMAIL
+  const { email, password } = await req.json()
 
-  if (!adminEmail) {
-    return NextResponse.json({ error: 'ADMIN_EMAIL no configurado' }, { status: 500 })
+  const loginEmail = email?.trim() || process.env.ADMIN_EMAIL
+
+  if (!loginEmail) {
+    return NextResponse.json({ error: 'Introduce tu email' }, { status: 400 })
+  }
+  if (!password) {
+    return NextResponse.json({ error: 'Introduce tu contraseña' }, { status: 400 })
   }
 
   const supabase = await createSupabaseServer()
-  const { error } = await supabase.auth.signInWithPassword({ email: adminEmail, password })
+  const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password })
 
   if (error) {
-    return NextResponse.json({ error: 'Contraseña incorrecta' }, { status: 401 })
+    return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
   }
 
   return NextResponse.json({ ok: true })
