@@ -9,7 +9,7 @@ export async function getAvailableSlots(date: Date, durationMinutes: number, exc
   // 1. Disponibilidad del día de la semana
   const { data: avail } = await supabase
     .from('availability')
-    .select('start_time, end_time')
+    .select('start_time, end_time, break_start, break_end')
     .eq('day_of_week', dayOfWeek)
     .eq('is_active', true)
     .single()
@@ -64,10 +64,19 @@ export async function getAvailableSlots(date: Date, durationMinutes: number, exc
       return isBefore(current, blockEnd) && isBefore(blockStart, slotEnd)
     })
 
-    // 7. Filtrar slots pasados si es hoy
+    // 7. Filtrar slots que caen dentro de la pausa de comida
+    const occupiedByBreak = avail.break_start && avail.break_end
+      ? (() => {
+          const breakStart = parse(avail.break_start, 'HH:mm:ss', date)
+          const breakEnd   = parse(avail.break_end,   'HH:mm:ss', date)
+          return isBefore(current, breakEnd) && isBefore(breakStart, slotEnd)
+        })()
+      : false
+
+    // 8. Filtrar slots pasados si es hoy
     const isPast = isToday(date) && isBefore(current, new Date())
 
-    if (!occupiedByAppointment && !occupiedByBlock && !isPast) {
+    if (!occupiedByAppointment && !occupiedByBlock && !occupiedByBreak && !isPast) {
       slots.push(slotStr)
     }
 

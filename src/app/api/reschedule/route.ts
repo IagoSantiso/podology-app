@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
 import { getAvailableSlots } from '@/lib/slots'
-import { sendConfirmationEmail } from '@/lib/resend'
+import { sendConfirmationEmail } from '@/lib/brevo'
 import { addMinutes, format, parse } from 'date-fns'
 
 // GET /api/reschedule?token=xxx&date=yyyy-MM-dd

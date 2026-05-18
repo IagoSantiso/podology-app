@@ -24,6 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${playfair.variable} ${dmSans.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-bg text-cream antialiased">
         {children}
+        <footer className="text-center text-xs text-gray-600 py-4">
+          <a href="/privacidad" className="hover:text-amber-500 mr-4">Privacidad</a>
+          <a href="/aviso-legal" className="hover:text-amber-500">Aviso legal</a>
+        </footer>
       </body>
     </html>
   )

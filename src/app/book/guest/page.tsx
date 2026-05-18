@@ -74,6 +74,16 @@ export default function GuestPage() {
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
+          <label className="flex items-start gap-2 text-sm text-gray-400">
+            <input type="checkbox" required className="mt-1 accent-amber-500" />
+            <span>
+              He leído y acepto la{' '}
+              <a href="/privacidad" target="_blank" className="underline text-amber-500">
+                política de privacidad
+              </a>
+            </span>
+          </label>
+
           <button
             type="submit"
             className="mt-2 bg-gold hover:bg-gold-dark text-bg font-semibold rounded-lg px-4 py-3.5 transition-colors"

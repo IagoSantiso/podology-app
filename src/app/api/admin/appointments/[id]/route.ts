@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
 import { addMinutes, format, parse } from 'date-fns'
-import { sendRescheduleByBarberEmail, sendCancelByBarberEmail } from '@/lib/resend'
+import { sendRescheduleByBarberEmail, sendCancelByBarberEmail } from '@/lib/brevo'
 
 const FAKE_EMAIL = 'sinEmail@barberia.local'
 

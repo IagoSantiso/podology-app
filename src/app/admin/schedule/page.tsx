@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import BrandHeader from '@/components/admin/BrandHeader'
 
-interface AvailabilityRow { id: string; day_of_week: number; start_time: string; end_time: string; is_active: boolean }
+interface AvailabilityRow { id: string; day_of_week: number; start_time: string; end_time: string; is_active: boolean; break_start?: string | null; break_end?: string | null }
 interface Holiday { id?: string; holiday_date: string; name: string; is_national: boolean }
 interface Vacation { id?: string; start_date: string; end_date: string; reason: string }
 
@@ -71,7 +72,7 @@ export default function SchedulePage() {
     setSaving(true)
     await fetch('/api/admin/availability', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ availability: availability.map(r => ({ id: r.id, day_of_week: r.day_of_week, start_time: r.start_time, end_time: r.end_time, is_active: r.is_active })) }),
+      body: JSON.stringify({ availability: availability.map(r => ({ id: r.id, day_of_week: r.day_of_week, start_time: r.start_time, end_time: r.end_time, is_active: r.is_active, break_start: r.break_start || null, break_end: r.break_end || null })) }),
     })
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
@@ -80,16 +81,7 @@ export default function SchedulePage() {
 
   return (
     <main className="min-h-screen pb-24 max-w-2xl mx-auto">
-      {/* Brand */}
-      <div className="flex items-center gap-2.5 px-5 pt-3.5">
-        <span className="w-[26px] h-[26px] rounded-sm border border-gold/35 inline-flex items-center justify-center text-gold">
-          <Scissors className="w-3 h-3" />
-        </span>
-        <div className="leading-none">
-          <div className="font-display italic text-[14px] text-cream">Iglesias</div>
-          <div className="text-[9px] tracking-[0.22em] uppercase text-muted mt-0.5 font-semibold">Horario</div>
-        </div>
-      </div>
+      <BrandHeader section="Horario" />
 
       {/* Title */}
       <div className="px-5 pt-[18px]">
@@ -126,29 +118,54 @@ export default function SchedulePage() {
               if (!row) return null
               const active = row.is_active
               const sm = slotToMin(fmt(row.start_time)), em = slotToMin(fmt(row.end_time))
-              const hours = active ? Math.floor((em - sm) / 60) : 0
+              const hasBreak = !!(row.break_start && row.break_end)
+              const breakMin = hasBreak
+                ? Math.max(0, slotToMin(fmt(row.break_end!)) - slotToMin(fmt(row.break_start!)))
+                : 0
+              const effectiveMin = em - sm - breakMin
+              const hours = active ? (effectiveMin % 60 === 0 ? String(effectiveMin / 60) : (effectiveMin / 60).toFixed(1)) : '0'
               return (
-                <div key={row.id} className={`bg-bg-card rounded-xl px-3.5 py-3 border flex items-center gap-3 transition-opacity
+                <div key={row.id} className={`bg-bg-card rounded-xl px-3.5 py-3 border flex items-start gap-3 transition-opacity
                   ${active ? 'border-border opacity-100' : 'border-border/40 opacity-55'}`}>
-                  <Toggle on={active} onChange={v => updateRow(row.id, 'is_active', v)}/>
+                  <div className="pt-0.5">
+                    <Toggle on={active} onChange={v => updateRow(row.id, 'is_active', v)}/>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className={`font-display font-semibold text-base leading-none ${active ? 'text-cream' : 'text-muted'}`}>
                       {DAY_LONG[d]}
                     </div>
                     {active ? (
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <input type="time" value={fmt(row.start_time)} onChange={e => updateRow(row.id, 'start_time', e.target.value + ':00')}
-                          className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
-                        <span className="text-muted font-display italic text-[13px]">a</span>
-                        <input type="time" value={fmt(row.end_time)} onChange={e => updateRow(row.id, 'end_time', e.target.value + ':00')}
-                          className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
-                      </div>
+                      <>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <input type="time" value={fmt(row.start_time)} onChange={e => updateRow(row.id, 'start_time', e.target.value + ':00')}
+                            className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
+                          <span className="text-muted font-display italic text-[13px]">a</span>
+                          <input type="time" value={fmt(row.end_time)} onChange={e => updateRow(row.id, 'end_time', e.target.value + ':00')}
+                            className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className="text-[10px] text-muted/70 font-semibold tracking-[0.12em] uppercase">Pausa</span>
+                          <Toggle on={hasBreak} onChange={v => {
+                            updateRow(row.id, 'break_start', v ? '14:00:00' : null)
+                            updateRow(row.id, 'break_end',   v ? '16:00:00' : null)
+                          }} size={14}/>
+                          {hasBreak && (
+                            <>
+                              <input type="time" value={fmt(row.break_start!)} onChange={e => updateRow(row.id, 'break_start', e.target.value + ':00')}
+                                className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
+                              <span className="text-muted font-display italic text-[13px]">a</span>
+                              <input type="time" value={fmt(row.break_end!)} onChange={e => updateRow(row.id, 'break_end', e.target.value + ':00')}
+                                className="bg-bg-input border border-border rounded px-2 py-1 text-cream text-[12.5px] tabular-nums w-[88px] focus:outline-none focus:border-gold"/>
+                            </>
+                          )}
+                        </div>
+                      </>
                     ) : (
                       <div className="text-[11px] text-muted/60 italic font-display mt-1">cerrado</div>
                     )}
                   </div>
                   {active && (
-                    <div className="text-right">
+                    <div className="text-right pt-0.5">
                       <span className="font-display font-semibold text-lg text-gold tabular-nums">{hours}</span>
                       <span className="text-[11px] text-muted ml-0.5">h</span>
                     </div>
@@ -169,7 +186,10 @@ export default function SchedulePage() {
               <span className="font-display font-semibold text-4xl text-gold leading-none tabular-nums">
                 {availability.filter(r => r.is_active).reduce((s,r) => {
                   const sm = slotToMin(fmt(r.start_time)), em = slotToMin(fmt(r.end_time))
-                  return s + (em - sm)
+                  const breakMin = (r.break_start && r.break_end)
+                    ? Math.max(0, slotToMin(fmt(r.break_end)) - slotToMin(fmt(r.break_start)))
+                    : 0
+                  return s + (em - sm - breakMin)
                 }, 0) / 60}
               </span>
               <span className="font-display italic text-base text-muted">horas</span>
@@ -359,6 +379,5 @@ function Toggle({ on, onChange, size = 20 }: { on: boolean; onChange: (v:boolean
 
 const SMALL_INPUT = "w-full bg-bg-input border border-border rounded px-2.5 py-2 text-cream text-[12.5px] focus:outline-none focus:border-gold"
 
-function Scissors({ className='' }) { return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>) }
 function Trash({ className='' }) { return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>) }
 function Plus({ className='' }) { return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>) }

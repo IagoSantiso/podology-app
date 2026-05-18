@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
-import { sendReminderEmailFirst, sendReminderEmailSecond } from '@/lib/resend'
+import { sendReminderEmailFirst, sendReminderEmailSecond } from '@/lib/brevo'
 
 // This endpoint is called by Vercel Cron every 10 minutes.
 // It checks for appointments that need reminder emails and sends them.

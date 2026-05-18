@@ -7,6 +7,7 @@ import {
   isToday, isSameDay,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+import BrandHeader from '@/components/admin/BrandHeader'
 
 interface Service { id: string; name: string; duration_minutes: number; price: number | null }
 interface Appointment {
@@ -69,6 +70,7 @@ export default function DashboardPage() {
 
   const [actionLoading, setActionLoading] = useState(false)
   const [notifPermission, setNotifPermission] = useState<string>('default')
+  const [mounted, setMounted] = useState(false)
   const lastCheckedRef = useRef(new Date())
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd')
@@ -95,6 +97,7 @@ export default function DashboardPage() {
     fetch('/api/services').then(r => r.json()).then(d => setServices(d.services ?? []))
     fetch('/api/admin/availability').then(r => r.json()).then(d => setAvailability(d.availability ?? []))
     if ('Notification' in window) setNotifPermission(Notification.permission)
+    setMounted(true)
   }, [])
 
   useEffect(() => { loadDay() }, [loadDay])
@@ -251,16 +254,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen pb-24 max-w-2xl mx-auto">
-      {/* Brand bar */}
-      <div className="flex items-center gap-2.5 px-5 pt-3.5">
-        <span className="w-[26px] h-[26px] rounded-sm border border-gold/35 inline-flex items-center justify-center text-gold">
-          <Scissors className="w-3 h-3" />
-        </span>
-        <div className="leading-none">
-          <div className="font-display italic text-[14px] text-cream tracking-tight">Iglesias</div>
-          <div className="text-[9px] tracking-[0.22em] uppercase text-muted mt-0.5 font-medium">Agenda</div>
-        </div>
-      </div>
+      <BrandHeader section="Agenda" />
 
       {/* Day header + view toggle */}
       <div className="px-5 pt-[18px] flex items-end justify-between gap-2">
@@ -318,7 +312,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Notification permission banner */}
-      {notifPermission === 'default' && typeof window !== 'undefined' && 'Notification' in window && (
+      {mounted && notifPermission === 'default' && 'Notification' in window && (
         <div className="mx-5 mt-4 flex items-center justify-between rounded-lg px-4 py-3 text-sm bg-gold/10 border border-gold/30">
           <span className="text-cream">Activa las notificaciones para nuevas citas</span>
           <button onClick={requestNotif} className="text-gold font-medium ml-2 shrink-0">Activar</button>
@@ -673,10 +667,10 @@ function TimelineView({ appts, availability, selectedDate, onCreate }: {
 // ─────────────────────────────────────────────────────────────
 function Modal({ onClose, title, subtitle, children }: { onClose:()=>void; title:string; subtitle?:React.ReactNode; children:React.ReactNode }) {
   return (
-    <div onClick={onClose} className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center px-0 sm:px-4">
+    <div onClick={onClose} className="fixed inset-0 z-[60] bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center px-0 sm:px-4">
       <div onClick={e => e.stopPropagation()}
         className="bg-bg-card border border-border border-b-0 sm:border-b sm:rounded-2xl rounded-t-2xl w-full sm:max-w-sm
-                   px-5 pt-5 pb-7 max-h-[92vh] overflow-y-auto shadow-[0_-20px_60px_rgba(0,0,0,0.5)]">
+                   px-5 pt-5 pb-10 max-h-[92vh] overflow-y-auto shadow-[0_-20px_60px_rgba(0,0,0,0.5)]">
         <div className="w-9 h-1 bg-border rounded-full mx-auto mb-3 sm:hidden"/>
         <h2 className="font-display italic text-[22px] text-cream leading-tight">{title}</h2>
         {subtitle && <div className="text-[12px] text-muted mb-4 mt-0.5">{subtitle}</div>}
@@ -703,9 +697,6 @@ const BTN_PRIMARY = "flex-1 py-3 rounded-lg font-semibold text-sm disabled:opaci
 // ─────────────────────────────────────────────────────────────
 // Inline SVG icons
 // ─────────────────────────────────────────────────────────────
-function Scissors({ className='' }) {
-  return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>)
-}
 function ListIcon({ className='' }) {
   return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>)
 }

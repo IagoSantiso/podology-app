@@ -4,7 +4,7 @@ import {
   sendBonoRequestEmail,
   sendBuyerBonoConfirmationEmail,
   sendGiftBonoEmail,
-} from '@/lib/resend'
+} from '@/lib/brevo'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()

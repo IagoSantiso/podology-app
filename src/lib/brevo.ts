@@ -1,10 +1,35 @@
-import { Resend } from 'resend'
+import { BrevoClient } from '@getbrevo/brevo'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
-const FROM = 'BarberApp <onboarding@resend.dev>'
+const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY! })
+
+const SENDER = { email: 'citas@tudominio.com', name: 'Barbería Iglesias' }
+
+async function sendEmail({
+  to,
+  toName,
+  subject,
+  html,
+  attachments,
+}: {
+  to: string
+  toName: string
+  subject: string
+  html: string
+  attachments?: { filename: string; content: string }[]
+}) {
+  return client.transactionalEmails.sendTransacEmail({
+    sender: SENDER,
+    to: [{ email: to, name: toName }],
+    subject,
+    htmlContent: html,
+    ...(attachments?.length && {
+      attachment: attachments.map(a => ({ name: a.filename, content: a.content })),
+    }),
+  })
+}
 
 interface AppointmentEmailData {
   clientName: string
@@ -39,53 +64,39 @@ async function generatePdf(data: AppointmentEmailData): Promise<Uint8Array> {
     { locale: es }
   )
 
-  // Background
   page.drawRectangle({ x: 0, y: 0, width: 420, height: 280, color: dark })
-
-  // Gold accent bar
   page.drawRectangle({ x: 0, y: 0, width: 4, height: 280, color: gold })
 
-  // Business name
   const biz = data.businessName ?? 'BarberApp'
   page.drawText(biz, { x: 24, y: 248, size: 18, font: helveticaBold, color: gold })
-
-  // Title
   page.drawText('Confirmacion de cita', { x: 24, y: 222, size: 11, font: helvetica, color: grey })
-
-  // Divider
   page.drawLine({ start: { x: 24, y: 212 }, end: { x: 396, y: 212 }, thickness: 0.5, color: rgb(0.2, 0.2, 0.2) })
 
-  // Service
   page.drawText('Servicio', { x: 24, y: 194, size: 9, font: helvetica, color: grey })
   page.drawText(data.serviceName, { x: 24, y: 178, size: 14, font: helveticaBold, color: cream })
 
-  // Date + time
   page.drawText('Fecha y hora', { x: 24, y: 158, size: 9, font: helvetica, color: grey })
   page.drawText(dateFormatted, { x: 24, y: 142, size: 11, font: helvetica, color: cream })
   page.drawText(data.startTime.slice(0, 5) + 'h', { x: 24, y: 124, size: 16, font: helveticaBold, color: gold })
 
-  // Price
   if (data.price) {
     page.drawText('Precio', { x: 260, y: 158, size: 9, font: helvetica, color: grey })
     page.drawText(data.price.toFixed(2) + ' EUR', { x: 260, y: 142, size: 14, font: helveticaBold, color: cream })
   }
 
-  // Client
   page.drawText('Cliente', { x: 24, y: 100, size: 9, font: helvetica, color: grey })
   page.drawText(data.clientName, { x: 24, y: 84, size: 11, font: helvetica, color: cream })
 
-  // Address
   if (data.businessAddress) {
     page.drawText(data.businessAddress, { x: 24, y: 36, size: 9, font: helvetica, color: grey })
   }
 
-  // Footer
   page.drawText('Ref: ' + data.appointmentId, { x: 24, y: 18, size: 8, font: helvetica, color: rgb(0.35, 0.35, 0.35) })
 
   return doc.save()
 }
 
-// ─── Shared card HTML block ───────────────────────────────────────────────────
+// ─── Shared HTML helpers ──────────────────────────────────────────────────────
 
 function appointmentCard(data: AppointmentEmailData, dateFormatted: string) {
   return `
@@ -162,9 +173,9 @@ export async function sendConfirmationEmail(data: AppointmentEmailData) {
 
   const pdfBytes = await generatePdf(data)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.clientEmail,
+    toName: data.clientName,
     subject: `✂️ Cita confirmada — ${data.startTime.slice(0, 5)}h, ${dateFormatted}`,
     html,
     attachments: [{
@@ -195,9 +206,9 @@ export async function sendReminderEmailFirst(data: AppointmentEmailData) {
     ${cancelLink(data.appointmentId)}
   `)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.clientEmail,
+    toName: data.clientName,
     subject: `⏰ Recordatorio — mañana a las ${data.startTime.slice(0, 5)}h`,
     html,
   })
@@ -264,9 +275,9 @@ export async function sendBonoRequestEmail({
     </p>
   `)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: adminEmail,
+    toName: 'Admin',
     subject: `${isGift ? '🎁' : '🎟️'} Solicitud de bono: ${bonoName} — ${clientName}`,
     html,
   })
@@ -311,9 +322,9 @@ export async function sendRescheduleByBarberEmail(data: {
     <p style="color:#666; font-size:13px;">Si tienes dudas, contacta directamente con la barbería.</p>
   `)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.clientEmail,
+    toName: data.clientName,
     subject: `✂️ Tu cita ha sido modificada — ahora ${fmtDT(data.newDate, data.newTime)}`,
     html,
   })
@@ -355,9 +366,9 @@ export async function sendCancelByBarberEmail(data: {
     <p style="color:#666; font-size:13px;">Puedes reservar una nueva cita cuando quieras en nuestra web.</p>
   `)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.clientEmail,
+    toName: data.clientName,
     subject: `Tu cita del ${dateFormatted} ha sido cancelada`,
     html,
   })
@@ -460,9 +471,9 @@ export async function sendBuyerBonoConfirmationEmail(data: {
 
   const pdfBytes = await generateBonoOrderPdf(data)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.buyerEmail,
+    toName: data.buyerName,
     subject: `🎟️ Solicitud de bono recibida — ${data.bonoName}`,
     html,
     attachments: [{
@@ -516,9 +527,9 @@ export async function sendGiftBonoEmail(data: {
     businessName: data.businessName,
   })
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.recipientEmail,
+    toName: data.recipientName,
     subject: `🎁 ${data.buyerName} te ha regalado: ${data.bonoName}`,
     html,
     attachments: [{
@@ -546,9 +557,9 @@ export async function sendReminderEmailSecond(data: AppointmentEmailData) {
     ${cancelLink(data.appointmentId)}
   `)
 
-  return resend.emails.send({
-    from: FROM,
+  return sendEmail({
     to: data.clientEmail,
+    toName: data.clientName,
     subject: `⏰ Tu cita es hoy a las ${data.startTime.slice(0, 5)}h`,
     html,
   })

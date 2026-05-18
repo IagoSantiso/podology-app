@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
-import { sendConfirmationEmail } from '@/lib/resend'
+import { sendConfirmationEmail } from '@/lib/brevo'
 
 export async function POST(req: NextRequest) {
   const { appointmentId } = await req.json()
