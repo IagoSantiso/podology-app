@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest) {
 
   const allowed = [
     'barber_phone', 'alarm_margin_minutes', 'delay_message_template',
-    'business_name', 'business_address', 'owner_email', 'logo_url', 'admin_password',
+    'business_name', 'business_address', 'owner_email', 'logo_url',
     'reschedule_cutoff_hours', 'reminder_first_hours', 'reminder_second_hours',
     'owner_name', 'nif', 'address', 'contact_email', 'data_retention_years',
   ]

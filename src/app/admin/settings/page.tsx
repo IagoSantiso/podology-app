@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import LogoCropModal from '@/components/LogoCropModal'
 import BrandHeader from '@/components/admin/BrandHeader'
+import { createSupabaseClient } from '@/lib/supabase-client'
 
 interface Config {
   barber_phone: string
@@ -92,11 +93,10 @@ export default function SettingsPage() {
     setPassError('')
     if (!newPassword || newPassword.length < 4) { setPassError('Mínimo 4 caracteres'); return }
     if (newPassword !== confirmPassword) { setPassError('Las contraseñas no coinciden'); return }
-    const res = await fetch('/api/admin/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ admin_password: newPassword }) })
-    if (res.ok) {
-      setConfig(p => ({ ...p, admin_password: newPassword }))
-      setNewPassword(''); setConfirmPassword(''); setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
-    } else setPassError('Error al cambiar la contraseña')
+    const supabase = createSupabaseClient()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { setPassError('Error al cambiar la contraseña'); return }
+    setNewPassword(''); setConfirmPassword(''); setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
   }
 
   async function requestNotif() { const p = await Notification.requestPermission(); setNotifPermission(p) }
