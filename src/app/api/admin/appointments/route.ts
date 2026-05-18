@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
+import { sendConfirmationEmail } from '@/lib/brevo'
 import { addMinutes, format, parse } from 'date-fns'
 
 export async function GET(req: NextRequest) {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const { data: service } = await supabase
     .from('services')
-    .select('duration_minutes')
+    .select('duration_minutes, name, price')
     .eq('id', service_id)
     .single()
 
@@ -78,11 +79,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ya hay una cita en ese horario' }, { status: 409 })
   }
 
+  const FAKE_EMAIL = 'sinEmail@barberia.local'
+  const finalEmail = client_email || FAKE_EMAIL
+  const rescheduleToken = crypto.randomUUID()
+
   const { data: appointment, error } = await supabase
     .from('appointments')
     .insert({
       client_name,
-      client_email: client_email || 'sinEmail@barberia.local',
+      client_email: finalEmail,
       client_phone,
       service_id,
       appointment_date,
@@ -91,10 +96,40 @@ export async function POST(req: NextRequest) {
       is_guest: true,
       client_user_id: null,
       status: 'confirmed',
+      reschedule_token: rescheduleToken,
     })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ appointment }, { status: 201 })
+
+  let emailWarning: string | null = null
+
+  if (finalEmail !== FAKE_EMAIL) {
+    try {
+      const { data: cfg } = await supabase
+        .from('barber_config')
+        .select('business_name, business_address')
+        .eq('id', 1)
+        .maybeSingle()
+
+      await sendConfirmationEmail({
+        clientName:      client_name,
+        clientEmail:     finalEmail,
+        serviceName:     service.name,
+        appointmentDate: appointment_date,
+        startTime:       startStr,
+        price:           service.price ?? null,
+        appointmentId:   appointment.id,
+        rescheduleToken,
+        isGuest:         true,
+        businessName:    cfg?.business_name,
+        businessAddress: cfg?.business_address,
+      })
+    } catch {
+      emailWarning = 'Cita creada, pero no se pudo enviar el email de confirmación al cliente'
+    }
+  }
+
+  return NextResponse.json({ appointment, ...(emailWarning && { emailWarning }) }, { status: 201 })
 }

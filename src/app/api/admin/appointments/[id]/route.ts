@@ -108,16 +108,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const hasEmail = current.client_email && current.client_email !== FAKE_EMAIL
 
+  let emailWarning: string | null = null
+
   // 2. Cancellation → email
   if (body.status === 'cancelled' && hasEmail) {
-    await sendCancelByBarberEmail({
-      clientName:      current.client_name,
-      clientEmail:     current.client_email,
-      serviceName:     current.services?.name ?? '',
-      appointmentDate: current.appointment_date,
-      startTime:       current.start_time,
-      note:            body.cancel_note ?? null,
-    }).catch(() => { /* email failure non-fatal */ })
+    try {
+      await sendCancelByBarberEmail({
+        clientName:      current.client_name,
+        clientEmail:     current.client_email,
+        serviceName:     current.services?.name ?? '',
+        appointmentDate: current.appointment_date,
+        startTime:       current.start_time,
+        note:            body.cancel_note ?? null,
+      })
+    } catch {
+      emailWarning = 'No se pudo enviar el email de cancelación al cliente'
+    }
   }
 
   // 3. Reschedule → email (only if date or time actually changed)
@@ -129,7 +135,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const changed = oldDate !== newDate || oldTime !== newTime
     if (changed) {
-      // Resolve new service name if service changed
       let newServiceName = current.services?.name ?? ''
       if (body.service_id && body.service_id !== current.service_id) {
         const { data: svc } = await supabase
@@ -137,18 +142,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         if (svc) newServiceName = svc.name
       }
 
-      await sendRescheduleByBarberEmail({
-        clientName:  current.client_name,
-        clientEmail: current.client_email,
-        serviceName: newServiceName,
-        oldDate,
-        oldTime,
-        newDate,
-        newTime,
-        note: body.reschedule_note ?? null,
-      }).catch(() => { /* email failure non-fatal */ })
+      try {
+        await sendRescheduleByBarberEmail({
+          clientName:  current.client_name,
+          clientEmail: current.client_email,
+          serviceName: newServiceName,
+          oldDate,
+          oldTime,
+          newDate,
+          newTime,
+          note: body.reschedule_note ?? null,
+        })
+      } catch {
+        emailWarning = 'No se pudo enviar el email de reagendado al cliente'
+      }
     }
   }
 
-  return NextResponse.json({ appointment: data })
+  return NextResponse.json({ appointment: data, ...(emailWarning && { emailWarning }) })
 }

@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [cancelNote, setCancelNote] = useState('')
 
   const [actionLoading, setActionLoading] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
   const [notifPermission, setNotifPermission] = useState<string>('default')
   const [mounted, setMounted] = useState(false)
   const lastCheckedRef = useRef(new Date())
@@ -144,12 +145,19 @@ export default function DashboardPage() {
     && (slotToMin(nextConfirmed.start_time) - nowMin) < 60
     && (slotToMin(nextConfirmed.start_time) - nowMin) > 0
 
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 6000)
+  }
+
   async function patchApt(id: string, updates: Record<string, unknown>) {
     setActionLoading(true)
-    await fetch(`/api/admin/appointments/${id}`, {
+    const res = await fetch(`/api/admin/appointments/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     })
+    const data = await res.json().catch(() => ({}))
+    if (data.emailWarning) showToast(data.emailWarning)
     await loadDay(); await loadWeek()
     setActionLoading(false)
   }
@@ -214,7 +222,9 @@ export default function DashboardPage() {
     const data = await res.json()
     setCreateLoading(false)
     if (!res.ok) { setCreateError(data.error ?? 'Error al crear'); return }
-    setCreateModal(null); await loadDay(); await loadWeek()
+    setCreateModal(null)
+    if (data.emailWarning) showToast(data.emailWarning)
+    await loadDay(); await loadWeek()
   }
 
   async function submitEdit(e: React.FormEvent<HTMLFormElement>) {
@@ -234,17 +244,21 @@ export default function DashboardPage() {
     const data = await res.json()
     setEditLoading(false)
     if (!res.ok) { setEditError(data.error ?? 'Error al guardar'); return }
-    setEditModal(null); await loadDay(); await loadWeek()
+    setEditModal(null)
+    if (data.emailWarning) showToast(data.emailWarning)
+    await loadDay(); await loadWeek()
   }
 
   async function submitCancel() {
     if (!cancelModal) return
     setActionLoading(true)
-    await fetch(`/api/admin/appointments/${cancelModal.aptId}`, {
+    const res = await fetch(`/api/admin/appointments/${cancelModal.aptId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'cancelled', cancel_note: cancelNote || null }),
     })
+    const data = await res.json().catch(() => ({}))
     setCancelModal(null); setCancelNote('')
+    if (data.emailWarning) showToast(data.emailWarning)
     await loadDay(); await loadWeek()
     setActionLoading(false)
   }
@@ -495,6 +509,17 @@ export default function DashboardPage() {
             <button onClick={markComplete} disabled={actionLoading} className={`${BTN_PRIMARY} bg-green-700 text-white`}>{actionLoading ? 'Guardando...' : '✓ Completar'}</button>
           </div>
         </Modal>
+      )}
+
+      {/* Email warning toast */}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-2rem)] max-w-sm
+          bg-orange-900/90 border border-orange-600/60 text-orange-200 text-[12.5px] leading-snug
+          rounded-xl px-4 py-3 shadow-xl backdrop-blur-sm flex items-start gap-2.5">
+          <span className="mt-0.5 shrink-0">⚠️</span>
+          <span>{toast}</span>
+          <button onClick={() => setToast(null)} className="ml-auto shrink-0 text-orange-400 hover:text-orange-200">✕</button>
+        </div>
       )}
 
       {/* Cancel with note */}
