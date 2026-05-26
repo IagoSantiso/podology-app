@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl
+  if (pathname === '/api/admin/auth' || pathname === '/api/admin/reset-password') {
+    return NextResponse.next()
+  }
+
   const session = req.cookies.get('admin_session')?.value
   if (session !== 'authenticated') {
-    if (req.nextUrl.pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
     return NextResponse.redirect(new URL('/admin', req.url))
