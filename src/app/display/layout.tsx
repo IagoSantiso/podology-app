@@ -1,0 +1,15 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Barber Display',
+  manifest: '/display/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Display',
+  },
+}
+
+export default function DisplayLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
+}
