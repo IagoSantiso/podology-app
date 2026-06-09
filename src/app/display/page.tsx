@@ -162,7 +162,7 @@ export default function DisplayPage() {
     }, 3000)
   }
 
-  // ── Delay notification (uses configured template from barber_config) ───────
+  // ── Delay notification (uses configured template from podologist_config) ────
 
   const handleDelaySelect = async (delayMinutes: number) => {
     if (!appointment || sending) return

@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 
 export function GET() {
   return NextResponse.json({
-    name: 'Barber Admin',
+    name: 'Podology Admin',
     short_name: 'Admin',
-    description: 'Panel de administración de la barbería.',
+    description: 'Panel de administración de la podología.',
     start_url: '/admin',
     display: 'standalone',
     background_color: '#000000',

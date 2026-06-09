@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
 
   const message =
     type === 'delay'
-      ? `Hola ${clientName}, te escribimos desde Tru Barber. Tu cita es a las ${appointmentTime}, puede que haya un pequeño retraso. ¡Hasta ahora!`
-      : `Hola ${clientName}, te esperamos en Tru Barber a las ${appointmentTime}. ¡Todo en orden, hasta ahora!`
+      ? `Hola ${clientName}, te escribimos desde la clínica de podología. Tu cita es a las ${appointmentTime}, puede que haya un pequeño retraso. ¡Hasta ahora!`
+      : `Hola ${clientName}, te esperamos en la clínica a las ${appointmentTime}. ¡Todo en orden, hasta ahora!`
 
   try {
     await sendWhatsApp(clientPhone, message)

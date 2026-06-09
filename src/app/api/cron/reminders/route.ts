@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const supabase = createSupabaseAdmin()
 
   const { data: cfg } = await supabase
-    .from('barber_config')
+    .from('podologist_config')
     .select('reminder_first_hours, reminder_second_hours, reschedule_cutoff_hours, business_name, business_address')
     .eq('id', 1)
     .maybeSingle()
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       appointmentId: apt.id,
       rescheduleToken: apt.reschedule_token ?? '',
       isGuest: apt.is_guest,
-      businessName: cfg?.business_name ?? 'BarberApp',
+      businessName: cfg?.business_name ?? 'PodologyApp',
       businessAddress: cfg?.business_address ?? '',
     }
 

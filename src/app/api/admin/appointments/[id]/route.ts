@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '@/lib/supabase-server'
 import { addMinutes, format, parse } from 'date-fns'
-import { sendRescheduleByBarberEmail, sendCancelByBarberEmail } from '@/lib/brevo'
+import { sendRescheduleByPodologistEmail, sendCancelByPodologistEmail } from '@/lib/brevo'
 
-const FAKE_EMAIL = 'sinEmail@barberia.local'
+const FAKE_EMAIL = 'sinEmail@podologia.local'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.status !== undefined) updates.status = body.status
   if (body.delay_minutes !== undefined) updates.delay_minutes = body.delay_minutes
   if (body.delay_notified !== undefined) updates.delay_notified = body.delay_notified
-  if (body.barber_notes !== undefined) updates.barber_notes = body.barber_notes
+  if (body.podologist_notes !== undefined) updates.podologist_notes = body.podologist_notes
 
   // ── Reschedule: allow changing date, time, or service ─────────────────────
   const isReschedule =
@@ -102,7 +102,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       client_email:    data.client_email,
       service_id:      data.service_id,
       visit_date:      data.appointment_date,
-      barber_notes:    body.barber_notes ?? null,
+      podologist_notes: body.podologist_notes ?? null,
     })
   }
 
@@ -113,7 +113,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // 2. Cancellation → email
   if (body.status === 'cancelled' && hasEmail) {
     try {
-      await sendCancelByBarberEmail({
+      await sendCancelByPodologistEmail({
         clientName:      current.client_name,
         clientEmail:     current.client_email,
         serviceName:     current.services?.name ?? '',
@@ -143,7 +143,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
 
       try {
-        await sendRescheduleByBarberEmail({
+        await sendRescheduleByPodologistEmail({
           clientName:  current.client_name,
           clientEmail: current.client_email,
           serviceName: newServiceName,

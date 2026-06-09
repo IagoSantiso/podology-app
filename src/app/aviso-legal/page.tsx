@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from '@/lib/supabase-server'
 export default async function AvisoLegalPage() {
   const supabase = createSupabaseAdmin()
   const { data } = await supabase
-    .from('barber_config')
+    .from('podologist_config')
     .select('business_name, owner_name, nif, address, contact_email')
     .eq('id', 1)
     .maybeSingle()
@@ -44,7 +44,7 @@ export default async function AvisoLegalPage() {
         <p>
           El presente Aviso Legal regula el acceso y uso de la aplicación de reservas online
           de {c.business_name} (en adelante, &ldquo;la Aplicación&rdquo;), cuya finalidad es permitir a los
-          usuarios solicitar y gestionar citas para los servicios de peluquería y barbería ofrecidos por
+          usuarios solicitar y gestionar citas para los servicios de podología ofrecidos por
           el titular.
         </p>
         <p>

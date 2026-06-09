@@ -21,7 +21,7 @@ function RescheduleContent() {
   const token = params.get('token')
 
   const [appointment, setAppointment] = useState<AppointmentInfo | null>(null)
-  const [businessName, setBusinessName] = useState('BarberApp')
+  const [businessName, setBusinessName] = useState('PodologyApp')
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
   const [slots, setSlots] = useState<string[]>([])
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
@@ -40,7 +40,7 @@ function RescheduleContent() {
         if (d.tooLate) { setState('tooLate'); setErrorMsg(d.error); return }
         if (d.error) { setState('error'); setErrorMsg(d.error); return }
         setAppointment(d.appointment)
-        setBusinessName(d.config?.businessName ?? 'BarberApp')
+        setBusinessName(d.config?.businessName ?? 'PodologyApp')
         setState('ready')
       })
       .catch(() => { setState('error'); setErrorMsg('Error de conexión') })

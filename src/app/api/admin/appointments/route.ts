@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ya hay una cita en ese horario' }, { status: 409 })
   }
 
-  const FAKE_EMAIL = 'sinEmail@barberia.local'
+  const FAKE_EMAIL = 'sinEmail@podologia.local'
   const finalEmail = client_email || FAKE_EMAIL
   const rescheduleToken = crypto.randomUUID()
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
   if (finalEmail !== FAKE_EMAIL) {
     try {
       const { data: cfg } = await supabase
-        .from('barber_config')
+        .from('podologist_config')
         .select('business_name, business_address')
         .eq('id', 1)
         .maybeSingle()

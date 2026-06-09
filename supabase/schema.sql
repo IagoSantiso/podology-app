@@ -1,9 +1,9 @@
 -- ============================================================
--- BarberApp — Schema completo
+-- PodologyApp — Schema completo
 -- Pegar en Supabase > SQL Editor y ejecutar
 -- ============================================================
 
--- Servicios ofrecidos por la barbería
+-- Servicios ofrecidos por la clínica de podología
 create table if not exists services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -13,11 +13,11 @@ create table if not exists services (
 );
 
 insert into services (name, duration_minutes, price) values
-  ('Corte', 30, 14.00),
-  ('Corte + Barba', 45, 18.00)
+  ('Consulta podológica', 30, 35.00),
+  ('Tratamiento de uñas', 45, 45.00)
 on conflict do nothing;
 
--- Disponibilidad semanal del barbero
+-- Disponibilidad semanal de la podóloga
 create table if not exists availability (
   id uuid primary key default gen_random_uuid(),
   day_of_week int not null,  -- 0=Dom, 1=Lun, ..., 6=Sáb
@@ -63,16 +63,16 @@ create table if not exists appointments (
   created_at timestamptz default now()
 );
 
--- Configuración del barbero (siempre 1 fila)
-create table if not exists barber_config (
+-- Configuración de la podóloga (siempre 1 fila)
+create table if not exists podologist_config (
   id int primary key default 1,
-  barber_phone text not null default '',
+  podologist_phone text not null default '',
   alarm_margin_minutes int default 60,
   delay_message_template text default
     'Hola {nombre}, te aviso que hoy llegaré unos {minutos} minutos tarde. Tu nueva hora estimada es {hora_nueva}. Disculpa las molestias 🙏'
 );
 
-insert into barber_config (id) values (1) on conflict do nothing;
+insert into podologist_config (id) values (1) on conflict do nothing;
 
 -- Perfiles de clientes registrados
 create table if not exists client_profiles (
@@ -80,7 +80,7 @@ create table if not exists client_profiles (
   full_name text,
   phone text,
   preferred_service_id uuid references services(id),
-  notes_for_barber text,
+  notes_for_podologist text,
   created_at timestamptz default now()
 );
 
@@ -92,7 +92,7 @@ create table if not exists visit_history (
   client_email text not null,
   service_id uuid references services(id),
   visit_date date not null,
-  barber_notes text,
+  podologist_notes text,
   created_at timestamptz default now()
 );
 
@@ -106,7 +106,7 @@ alter table visit_history enable row level security;
 alter table services enable row level security;
 alter table availability enable row level security;
 alter table blocked_slots enable row level security;
-alter table barber_config enable row level security;
+alter table podologist_config enable row level security;
 
 -- services: lectura pública
 create policy "Lectura pública de servicios" on services for select using (true);
@@ -117,17 +117,17 @@ create policy "Lectura pública de disponibilidad" on availability for select us
 -- blocked_slots: lectura pública
 create policy "Lectura pública de bloqueos" on blocked_slots for select using (true);
 
--- barber_config: lectura pública (para obtener el template de retraso)
-create policy "Lectura pública de config" on barber_config for select using (true);
+-- podologist_config: lectura pública (para obtener el template de retraso)
+create policy "Lectura pública de config" on podologist_config for select using (true);
 
 -- appointments
 create policy "Clientes pueden crear citas" on appointments
   for insert with check (true);
 
-create policy "Barbero puede ver todas las citas" on appointments
+create policy "Podóloga puede ver todas las citas" on appointments
   for select using (true);
 
-create policy "Barbero puede actualizar citas" on appointments
+create policy "Podóloga puede actualizar citas" on appointments
   for update using (true);
 
 create policy "Cliente registrado ve sus propias citas" on appointments
@@ -147,5 +147,5 @@ create policy "Usuario crea su perfil" on client_profiles
 create policy "Cliente registrado ve su historial" on visit_history
   for select using (auth.uid() = client_user_id);
 
-create policy "Barbero puede ver y escribir historial" on visit_history
+create policy "Podóloga puede ver y escribir historial" on visit_history
   for all using (true);

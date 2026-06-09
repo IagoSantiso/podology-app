@@ -3,7 +3,7 @@ import { createSupabaseAdmin } from '@/lib/supabase-server'
 export default async function PrivacidadPage() {
   const supabase = createSupabaseAdmin()
   const { data } = await supabase
-    .from('barber_config')
+    .from('podologist_config')
     .select('business_name, owner_name, nif, address, contact_email, data_retention_years')
     .eq('id', 1)
     .maybeSingle()

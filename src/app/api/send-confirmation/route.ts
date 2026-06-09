@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const [{ data: apt }, { data: cfg }] = await Promise.all([
     supabase.from('appointments').select('*, services(name, price)').eq('id', appointmentId).single(),
-    supabase.from('barber_config').select('business_name, business_address').eq('id', 1).maybeSingle(),
+    supabase.from('podologist_config').select('business_name, business_address').eq('id', 1).maybeSingle(),
   ])
 
   if (!apt) {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       appointmentId: apt.id,
       rescheduleToken: apt.reschedule_token ?? '',
       isGuest: apt.is_guest,
-      businessName: cfg?.business_name ?? 'BarberApp',
+      businessName: cfg?.business_name ?? 'PodologyApp',
       businessAddress: cfg?.business_address ?? '',
     })
     return NextResponse.json({ ok: true })

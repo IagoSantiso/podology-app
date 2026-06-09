@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-xs">
         <div className="text-center mb-10">
           <span className="text-4xl">✂️</span>
-          <h1 className="font-display text-3xl font-bold text-gold mt-3">Panel del barbero</h1>
+          <h1 className="font-display text-3xl font-bold text-gold mt-3">Panel de la podóloga</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

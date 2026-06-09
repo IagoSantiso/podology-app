@@ -7,7 +7,7 @@ import BrandHeader from '@/components/admin/BrandHeader'
 import { createSupabaseClient } from '@/lib/supabase-client'
 
 interface Config {
-  barber_phone: string
+  podologist_phone: string
   alarm_margin_minutes: number
   delay_message_template: string
   business_name: string
@@ -26,8 +26,8 @@ interface Config {
 }
 
 const DEFAULTS: Config = {
-  barber_phone: '', alarm_margin_minutes: 60,
-  delay_message_template: '', business_name: 'BarberApp',
+  podologist_phone: '', alarm_margin_minutes: 60,
+  delay_message_template: '', business_name: 'PodologyApp',
   business_address: '', owner_email: '', logo_url: null, admin_password: null,
   reschedule_cutoff_hours: 2, reminder_first_hours: 12, reminder_second_hours: 2,
   owner_name: '', nif: '', address: '', contact_email: '', data_retention_years: 3,
@@ -141,7 +141,7 @@ export default function SettingsPage() {
         <div className="px-5 pt-6">
           {/* 1 — Teléfono */}
           <CardCard icon={<Phone className="w-4 h-4"/>} title="Tu teléfono">
-            <input type="tel" value={config.barber_phone} onChange={e => setConfig(p => ({ ...p, barber_phone: e.target.value }))}
+            <input type="tel" value={config.podologist_phone} onChange={e => setConfig(p => ({ ...p, podologist_phone: e.target.value }))}
               placeholder="+34600000000" className={BIG_INPUT}/>
             <p className="text-[11px] text-muted mt-2 font-display italic">
               Recibirás un SMS la noche anterior si tienes citas el día siguiente.

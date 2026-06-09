@@ -14,7 +14,7 @@ export default function BrandHeader({ section }: { section: string }) {
     fetch('/api/public/config')
       .then(r => r.json())
       .then(d => {
-        cached = { business_name: d.business_name ?? 'BarberApp', logo_url: d.logo_url ?? null }
+        cached = { business_name: d.business_name ?? 'PodologyApp', logo_url: d.logo_url ?? null }
         setBrand(cached)
       })
       .catch(() => {})

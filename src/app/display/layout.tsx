@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Barber Display',
+  title: 'Podology Display',
   manifest: '/display/manifest.webmanifest',
   appleWebApp: {
     capable: true,

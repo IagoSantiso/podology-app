@@ -5,7 +5,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY! })
 
-const SENDER = { email: 'citas@tudominio.com', name: 'Barbería Iglesias' }
+const SENDER = { email: 'citas@tudominio.com', name: 'Podología' }
 
 async function sendEmail({
   to,
@@ -67,7 +67,7 @@ async function generatePdf(data: AppointmentEmailData): Promise<Uint8Array> {
   page.drawRectangle({ x: 0, y: 0, width: 420, height: 280, color: dark })
   page.drawRectangle({ x: 0, y: 0, width: 4, height: 280, color: gold })
 
-  const biz = data.businessName ?? 'BarberApp'
+  const biz = data.businessName ?? 'PodologyApp'
   page.drawText(biz, { x: 24, y: 248, size: 18, font: helveticaBold, color: gold })
   page.drawText('Confirmacion de cita', { x: 24, y: 222, size: 11, font: helvetica, color: grey })
   page.drawLine({ start: { x: 24, y: 212 }, end: { x: 396, y: 212 }, thickness: 0.5, color: rgb(0.2, 0.2, 0.2) })
@@ -133,7 +133,7 @@ function emailWrapper(content: string) {
       <div style="max-width:520px; margin:0 auto; background:#111; border:1px solid #333; border-radius:8px; padding:40px;">
         ${content}
         <hr style="border:none; border-top:1px solid #222; margin:32px 0 16px;">
-        <p style="color:#555; font-size:12px; margin:0;">BarberApp · Si no solicitaste esta cita, ignora este email.</p>
+        <p style="color:#555; font-size:12px; margin:0;">PodologyApp · Si no solicitaste esta cita, ignora este email.</p>
       </div>
     </body>
     </html>
@@ -283,9 +283,9 @@ export async function sendBonoRequestEmail({
   })
 }
 
-// ─── Reschedule by barber email ──────────────────────────────────────────────
+// ─── Reschedule by podologist email ──────────────────────────────────────────
 
-export async function sendRescheduleByBarberEmail(data: {
+export async function sendRescheduleByPodologistEmail(data: {
   clientName: string
   clientEmail: string
   serviceName: string
@@ -315,11 +315,11 @@ export async function sendRescheduleByBarberEmail(data: {
 
     ${data.note ? `
     <div style="background:#111; border:1px solid #333; padding:14px 18px; border-radius:4px; margin-bottom:20px;">
-      <p style="margin:0 0 6px; color:#999; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Nota del barbero</p>
+      <p style="margin:0 0 6px; color:#999; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Nota de la podóloga</p>
       <p style="margin:0; color:#f5f0e8; font-size:14px;">${data.note}</p>
     </div>` : ''}
 
-    <p style="color:#666; font-size:13px;">Si tienes dudas, contacta directamente con la barbería.</p>
+    <p style="color:#666; font-size:13px;">Si tienes dudas, contacta directamente con la clínica.</p>
   `)
 
   return sendEmail({
@@ -330,9 +330,9 @@ export async function sendRescheduleByBarberEmail(data: {
   })
 }
 
-// ─── Cancellation by barber email ─────────────────────────────────────────────
+// ─── Cancellation by podologist email ────────────────────────────────────────
 
-export async function sendCancelByBarberEmail(data: {
+export async function sendCancelByPodologistEmail(data: {
   clientName: string
   clientEmail: string
   serviceName: string
@@ -359,7 +359,7 @@ export async function sendCancelByBarberEmail(data: {
 
     ${data.note ? `
     <div style="background:#111; border:1px solid #333; padding:14px 18px; border-radius:4px; margin-bottom:20px;">
-      <p style="margin:0 0 6px; color:#999; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Nota del barbero</p>
+      <p style="margin:0 0 6px; color:#999; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Nota de la podóloga</p>
       <p style="margin:0; color:#f5f0e8; font-size:14px;">${data.note}</p>
     </div>` : ''}
 
@@ -401,7 +401,7 @@ async function generateBonoOrderPdf(data: {
   page.drawRectangle({ x: 0, y: 0, width: 420, height: 300, color: dark })
   page.drawRectangle({ x: 0, y: 0, width: 4, height: 300, color: gold })
 
-  const biz = data.businessName ?? 'BarberApp'
+  const biz = data.businessName ?? 'PodologyApp'
   page.drawText(biz, { x: 24, y: 268, size: 18, font: bold, color: gold })
   page.drawText('Orden de compra de bono', { x: 24, y: 244, size: 10, font: regular, color: grey })
   page.drawLine({ start: { x: 24, y: 234 }, end: { x: 396, y: 234 }, thickness: 0.5, color: rgb(0.2, 0.2, 0.2) })

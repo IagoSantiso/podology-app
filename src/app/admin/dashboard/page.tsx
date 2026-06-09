@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   // Complete modal
   const [completeModal, setCompleteModal] = useState<{ aptId: string; clientName: string } | null>(null)
-  const [barberNotes, setBarberNotes] = useState('')
+  const [podologistNotes, setPodologistNotes] = useState('')
 
   // Edit modal
   const [editModal, setEditModal] = useState<{ aptId: string; clientName: string } | null>(null)
@@ -174,8 +174,8 @@ export default function DashboardPage() {
 
   async function markComplete() {
     if (!completeModal) return
-    await patchApt(completeModal.aptId, { status: 'completed', barber_notes: barberNotes || null })
-    setCompleteModal(null); setBarberNotes('')
+    await patchApt(completeModal.aptId, { status: 'completed', podologist_notes: podologistNotes || null })
+    setCompleteModal(null); setPodologistNotes('')
   }
 
   function openCreate(slot: string) {
@@ -214,7 +214,7 @@ export default function DashboardPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...createForm,
-        client_email: createForm.client_email || 'sinEmail@barberia.local',
+        client_email: createForm.client_email || 'sinEmail@podologia.local',
         appointment_date: createModal!.date,
         start_time: createForm.time,
       }),
@@ -499,13 +499,13 @@ export default function DashboardPage() {
 
       {/* Complete */}
       {completeModal && (
-        <Modal onClose={() => { setCompleteModal(null); setBarberNotes('') }} title="Completar cita" subtitle={completeModal.clientName}>
-          <Field label="Notas del corte (opcional)">
-            <textarea value={barberNotes} onChange={e => setBarberNotes(e.target.value)}
-              placeholder="Fade 2 lados, tijera 4cm arriba…" rows={3} className={`${INPUT} resize-none`}/>
+        <Modal onClose={() => { setCompleteModal(null); setPodologistNotes('') }} title="Completar cita" subtitle={completeModal.clientName}>
+          <Field label="Notas de la visita (opcional)">
+            <textarea value={podologistNotes} onChange={e => setPodologistNotes(e.target.value)}
+              placeholder="Tratamiento de uña encarnada, pie derecho…" rows={3} className={`${INPUT} resize-none`}/>
           </Field>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => { setCompleteModal(null); setBarberNotes('') }} className={BTN_GHOST}>Cancelar</button>
+            <button onClick={() => { setCompleteModal(null); setPodologistNotes('') }} className={BTN_GHOST}>Cancelar</button>
             <button onClick={markComplete} disabled={actionLoading} className={`${BTN_PRIMARY} bg-green-700 text-white`}>{actionLoading ? 'Guardando...' : '✓ Completar'}</button>
           </div>
         </Modal>

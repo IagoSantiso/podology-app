@@ -15,14 +15,14 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Barbería — Reserva tu cita',
+  title: 'Podología — Reserva tu cita',
   description: 'Reserva tu cita online en segundos.',
-  applicationName: 'Barber-app',
+  applicationName: 'Podology-app',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Barber-app',
+    title: 'Podology-app',
   },
   formatDetection: { telephone: false },
 }

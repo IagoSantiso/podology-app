@@ -10,7 +10,7 @@ import { createSupabaseClient } from '@/lib/supabase-client'
 interface Visit {
   id: string
   visit_date: string
-  barber_notes: string | null
+  podologist_notes: string | null
   services: { name: string; price: number | null } | null
 }
 
@@ -28,7 +28,7 @@ export default function HistoryPage() {
 
       const { data } = await supabase
         .from('visit_history')
-        .select('id, visit_date, barber_notes, services(name, price)')
+        .select('id, visit_date, podologist_notes, services(name, price)')
         .eq('client_user_id', user.id)
         .order('visit_date', { ascending: false })
 
@@ -68,10 +68,10 @@ export default function HistoryPage() {
                   <span className="text-gold font-semibold text-sm">{Number(v.services.price).toFixed(2)} €</span>
                 )}
               </div>
-              {v.barber_notes && (
+              {v.podologist_notes && (
                 <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-xs text-muted uppercase tracking-widest mb-1">Notas del barbero</p>
-                  <p className="text-cream text-sm italic">"{v.barber_notes}"</p>
+                  <p className="text-xs text-muted uppercase tracking-widest mb-1">Notas de la podóloga</p>
+                  <p className="text-cream text-sm italic">"{v.podologist_notes}"</p>
                 </div>
               )}
             </div>

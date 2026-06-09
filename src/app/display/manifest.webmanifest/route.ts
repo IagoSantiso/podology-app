@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 
 export function GET() {
   return NextResponse.json({
-    name: 'Barber Display',
+    name: 'Podology Display',
     short_name: 'Display',
-    description: 'Pantalla de turno de la barbería.',
+    description: 'Pantalla de turno de la podología.',
     start_url: '/display',
     display: 'fullscreen',
     background_color: '#000000',

@@ -10,12 +10,12 @@ interface Profile {
   full_name: string
   phone: string
   preferred_service_id: string | null
-  notes_for_barber: string
+  notes_for_podologist: string
 }
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<Profile>({ full_name: '', phone: '', preferred_service_id: null, notes_for_barber: '' })
+  const [profile, setProfile] = useState<Profile>({ full_name: '', phone: '', preferred_service_id: null, notes_for_podologist: '' })
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -40,7 +40,7 @@ export default function ProfilePage() {
           full_name: prof.full_name ?? '',
           phone: prof.phone ?? '',
           preferred_service_id: prof.preferred_service_id ?? null,
-          notes_for_barber: prof.notes_for_barber ?? '',
+          notes_for_podologist: prof.notes_for_podologist ?? '',
         })
       }
       setServices(svcs ?? [])
@@ -61,7 +61,7 @@ export default function ProfilePage() {
       full_name: profile.full_name,
       phone: profile.phone,
       preferred_service_id: profile.preferred_service_id || null,
-      notes_for_barber: profile.notes_for_barber,
+      notes_for_podologist: profile.notes_for_podologist,
     })
 
     setSaving(false)
@@ -126,11 +126,11 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">Notas para el barbero</label>
+          <label className="block text-sm text-muted mb-1.5">Notas para la podóloga</label>
           <textarea
-            value={profile.notes_for_barber}
-            onChange={e => setProfile(p => ({ ...p, notes_for_barber: e.target.value }))}
-            placeholder="Ej: Corte muy corto a los lados, largo arriba, sin navaja..."
+            value={profile.notes_for_podologist}
+            onChange={e => setProfile(p => ({ ...p, notes_for_podologist: e.target.value }))}
+            placeholder="Ej: Uña encarnada pie derecho, sensibilidad en talón izquierdo..."
             rows={3}
             className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold resize-none text-sm"
           />

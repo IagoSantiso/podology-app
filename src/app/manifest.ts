@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Barber-app',
-    short_name: 'Barber-app',
+    name: 'Podology-app',
+    short_name: 'Podology-app',
     description: 'Reserva tu cita online en segundos.',
     start_url: '/',
     display: 'standalone',

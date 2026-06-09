@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   const [{ data: apt }, { data: config }] = await Promise.all([
     supabase.from('appointments').select('*').eq('id', appointmentId).single(),
-    supabase.from('barber_config').select('*').eq('id', 1).single(),
+    supabase.from('podologist_config').select('*').eq('id', 1).single(),
   ])
 
   if (!apt) return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 })

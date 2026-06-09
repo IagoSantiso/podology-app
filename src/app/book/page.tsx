@@ -7,13 +7,13 @@ async function getPublicConfig() {
   try {
     const supabase = createSupabaseAdmin()
     const { data } = await supabase
-      .from('barber_config')
+      .from('podologist_config')
       .select('business_name, logo_url')
       .eq('id', 1)
       .single()
-    return { business_name: data?.business_name ?? 'BarberApp', logo_url: data?.logo_url ?? null }
+    return { business_name: data?.business_name ?? 'PodologyApp', logo_url: data?.logo_url ?? null }
   } catch {
-    return { business_name: 'BarberApp', logo_url: null }
+    return { business_name: 'PodologyApp', logo_url: null }
   }
 }
 

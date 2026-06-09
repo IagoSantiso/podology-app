@@ -4,7 +4,7 @@ import { createSupabaseAdmin } from '@/lib/supabase-server'
 export async function GET() {
   const supabase = createSupabaseAdmin()
   const { data, error } = await supabase
-    .from('barber_config')
+    .from('podologist_config')
     .select('*')
     .eq('id', 1)
     .maybeSingle()
@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest) {
   const supabase = createSupabaseAdmin()
 
   const allowed = [
-    'barber_phone', 'alarm_margin_minutes', 'delay_message_template',
+    'podologist_phone', 'alarm_margin_minutes', 'delay_message_template',
     'business_name', 'business_address', 'owner_email', 'logo_url',
     'reschedule_cutoff_hours', 'reminder_first_hours', 'reminder_second_hours',
     'owner_name', 'nif', 'address', 'contact_email', 'data_retention_years',
@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
     if (body[key] !== undefined) updates[key] = body[key]
   }
 
-  const { error } = await supabase.from('barber_config').upsert(updates)
+  const { error } = await supabase.from('podologist_config').upsert(updates)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

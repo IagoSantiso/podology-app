@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const [{ data: bono, error: bonoError }, { data: config }] = await Promise.all([
     supabase.from('bonos').select('*, services(name)').eq('id', bono_id).eq('is_active', true).single(),
-    supabase.from('barber_config').select('owner_email, business_name').eq('id', 1).maybeSingle(),
+    supabase.from('podologist_config').select('owner_email, business_name').eq('id', 1).maybeSingle(),
   ])
 
   if (bonoError || !bono) {

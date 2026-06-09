@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
 
-  await supabase.from('barber_config').update({ logo_url: publicUrl }).eq('id', 1)
+  await supabase.from('podologist_config').update({ logo_url: publicUrl }).eq('id', 1)
 
   return NextResponse.json({ url: publicUrl })
 }
