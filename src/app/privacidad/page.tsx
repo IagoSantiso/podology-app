@@ -1,5 +1,7 @@
 import { createSupabaseAdmin } from '@/lib/supabase-server'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PrivacidadPage() {
   const supabase = createSupabaseAdmin()
   const { data } = await supabase
