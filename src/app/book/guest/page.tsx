@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+const INPUT = "w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition-colors"
+
 export default function GuestPage() {
   const router = useRouter()
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
@@ -15,8 +17,8 @@ export default function GuestPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
-      setError('Completa todos los campos')
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError('Nombre y teléfono son obligatorios')
       return
     }
     sessionStorage.setItem('guest', JSON.stringify(form))
@@ -24,73 +26,74 @@ export default function GuestPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        <Link href="/book" className="text-muted text-sm hover:text-gold transition-colors mb-8 inline-flex items-center gap-1">
-          ← Volver
+    <main className="min-h-screen flex flex-col px-5 py-10" style={{ background: 'var(--bg)' }}>
+      <div className="w-full max-w-sm mx-auto">
+
+        <Link href="/book/login" className="inline-flex items-center gap-1.5 text-sm mb-8 transition-opacity hover:opacity-70" style={{ color: 'var(--ink-3)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Volver
         </Link>
 
-        <h1 className="font-display text-3xl font-bold text-cream mt-4">Tus datos</h1>
-        <p className="text-muted text-sm mt-1 mb-8">Solo necesitamos esto para confirmarte la cita</p>
+        <p className="text-xs font-bold tracking-[0.22em] uppercase mb-1" style={{ color: 'var(--primary)' }}>Tus datos</p>
+        <h1 className="font-display italic text-3xl mb-2" style={{ color: 'var(--ink)' }}>¿Cómo te llamamos?</h1>
+        <p className="text-sm mb-8" style={{ color: 'var(--ink-3)' }}>Solo necesitamos esto para confirmarte la cita</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm text-muted mb-1.5">Nombre completo</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Nombre completo *</label>
             <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Carlos García"
-              autoComplete="name"
-              className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold transition-colors"
+              name="name" value={form.name} onChange={handleChange}
+              placeholder="Ana García" autoComplete="name"
+              className={INPUT}
+              style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-muted mb-1.5">Email</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Teléfono *</label>
             <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="carlos@email.com"
-              autoComplete="email"
-              className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold transition-colors"
+              name="phone" type="tel" value={form.phone} onChange={handleChange}
+              placeholder="+34 600 000 000" autoComplete="tel"
+              className={INPUT}
+              style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-muted mb-1.5">Teléfono</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>
+              Email <span className="font-normal">(opcional — para confirmación)</span>
+            </label>
             <input
-              name="phone"
-              type="tel"
-              value={form.phone}
-              onChange={handleChange}
-              placeholder="+34 600 000 000"
-              autoComplete="tel"
-              className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold transition-colors"
+              name="email" type="email" value={form.email} onChange={handleChange}
+              placeholder="ana@email.com" autoComplete="email"
+              className={INPUT}
+              style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-
-          <label className="flex items-start gap-2 text-sm text-gray-400">
-            <input type="checkbox" required className="mt-1 accent-amber-500" />
+          <label className="flex items-start gap-2.5 text-sm" style={{ color: 'var(--ink-3)' }}>
+            <input type="checkbox" required className="mt-0.5 shrink-0" style={{ accentColor: 'var(--primary)' }} />
             <span>
               He leído y acepto la{' '}
-              <a href="/privacidad" target="_blank" className="underline text-amber-500">
+              <a href="/privacidad" target="_blank" className="underline" style={{ color: 'var(--primary)' }}>
                 política de privacidad
               </a>
             </span>
           </label>
 
+          {error && <p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
+
           <button
             type="submit"
-            className="mt-2 bg-gold hover:bg-gold-dark text-bg font-semibold rounded-lg px-4 py-3.5 transition-colors"
+            className="mt-2 py-4 rounded-2xl font-semibold text-base transition-opacity hover:opacity-90"
+            style={{ background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius)' }}
           >
             Elegir fecha y servicio →
           </button>
         </form>
+
       </div>
     </main>
   )

@@ -1,37 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  --gold: #d4a853;
-  --gold-dark: #b8922e;
-  --cream: #f5f0e8;
-  --bg: #0a0a0a;
-  --bg-card: #111111;
-  --bg-input: #1a1a1a;
-  --border: #2a2a2a;
-  --muted: #666666;
+  /* Paleta principal — Cuidado Teal */
+  --primary:      #2f7d6e;
+  --primary-deep: #1f3a36;
+  --primary-soft: #e3efec;
+  --primary-tint: #f0f6f4;
+  --accent:       #c98a5e;
+  --accent-soft:  #f6ece2;
+
+  /* Semánticos */
+  --ok:           #2f8a5b;
+  --ok-soft:      #e3f2e9;
+  --info:         #2f7d6e;
+  --info-soft:    #e3efec;
+  --warn:         #c2872f;
+  --warn-soft:    #f8efdd;
+  --danger:       #c0524a;
+  --danger-soft:  #f7e6e4;
+
+  /* Texto */
+  --ink:          #1c2826;
+  --ink-2:        #4a5b58;
+  --ink-3:        #7c8b88;
+
+  /* Líneas y divisores */
+  --line:         #e4ebe9;
+  --line-2:       #eef3f1;
+
+  /* Fondos */
+  --bg:           #f4f7f6;
+  --card:         #ffffff;
+  --field:        #f5f8f7;
+
+  /* Radio */
+  --radius:       20px;
+  --radius-lg:    26px;
+  --radius-sm:    13px;
+
+  /* Sombras */
+  --shadow-sm:    0 1px 3px 0 rgb(31 58 54 / 0.06), 0 1px 2px -1px rgb(31 58 54 / 0.04);
+  --shadow:       0 4px 12px 0 rgb(31 58 54 / 0.08), 0 2px 4px -2px rgb(31 58 54 / 0.05);
+  --shadow-lg:    0 10px 28px -4px rgb(31 58 54 / 0.12), 0 4px 10px -4px rgb(31 58 54 / 0.06);
 }
 
 @theme inline {
-  --color-gold: var(--gold);
-  --color-gold-dark: var(--gold-dark);
-  --color-cream: var(--cream);
-  --color-bg: var(--bg);
-  --color-bg-card: var(--bg-card);
-  --color-bg-input: var(--bg-input);
-  --color-border: var(--border);
-  --color-muted: var(--muted);
-  --font-display: var(--font-playfair);
-  --font-sans: var(--font-dm-sans);
+  /* Colores */
+  --color-primary:      var(--primary);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-tint: var(--primary-tint);
+  --color-accent:       var(--accent);
+  --color-accent-soft:  var(--accent-soft);
+
+  --color-ok:           var(--ok);
+  --color-ok-soft:      var(--ok-soft);
+  --color-info:         var(--info);
+  --color-info-soft:    var(--info-soft);
+  --color-warn:         var(--warn);
+  --color-warn-soft:    var(--warn-soft);
+  --color-danger:       var(--danger);
+  --color-danger-soft:  var(--danger-soft);
+
+  --color-ink:          var(--ink);
+  --color-ink-2:        var(--ink-2);
+  --color-ink-3:        var(--ink-3);
+
+  --color-line:         var(--line);
+  --color-line-2:       var(--line-2);
+
+  --color-bg:           var(--bg);
+  --color-card:         var(--card);
+  --color-field:        var(--field);
+
+  /* Tipografía */
+  --font-display: var(--font-newsreader);
+  --font-sans:    var(--font-hanken);
+
+  /* Radio */
+  --radius:       var(--radius);
+  --radius-lg:    var(--radius-lg);
+  --radius-sm:    var(--radius-sm);
 }
 
 body {
   background: var(--bg);
-  color: var(--cream);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-hanken), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Scrollbar minimalista */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--line-2); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { format, addDays, isBefore, startOfDay, addMonths } from 'date-fns'
+import { format, addDays, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 interface Service { id: string; name: string; duration_minutes: number; price: number | null }
@@ -19,7 +19,6 @@ export default function SelectPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [calendarDays, setCalendarDays] = useState<Date[]>([])
-  const [step, setStep] = useState<'service' | 'date' | 'time'>('service')
 
   useEffect(() => {
     fetch('/api/services')
@@ -56,57 +55,106 @@ export default function SelectPage() {
     router.push('/book/confirm')
   }
 
+  const step = selectedService ? (selectedDate ? (selectedSlot ? 3 : 2) : 2) : 1
+
   return (
-    <main className="min-h-screen flex flex-col items-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <Link href="/book/guest" className="text-muted text-sm hover:text-gold transition-colors mb-8 inline-flex items-center gap-1">
-          ← Volver
+    <main className="min-h-screen flex flex-col px-5 py-10" style={{ background: 'var(--bg)' }}>
+      <div className="w-full max-w-md mx-auto">
+
+        <Link href="/book/login" className="inline-flex items-center gap-1.5 text-sm mb-8 transition-opacity hover:opacity-70" style={{ color: 'var(--ink-3)' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Volver
         </Link>
 
-        <h1 className="font-display text-3xl font-bold text-cream mt-4 mb-8">Tu cita</h1>
+        {/* Stepper */}
+        <div className="flex items-center gap-2 mb-8">
+          {['Tratamiento', 'Día', 'Hora'].map((label, i) => {
+            const n = i + 1
+            const done = step > n
+            const active = step === n
+            return (
+              <div key={label} className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+                    style={done
+                      ? { background: 'var(--ok)', color: '#fff' }
+                      : active
+                      ? { background: 'var(--primary)', color: '#fff' }
+                      : { background: 'var(--line)', color: 'var(--ink-3)' }
+                    }
+                  >
+                    {done ? '✓' : n}
+                  </div>
+                  <span className="text-xs font-semibold" style={{ color: active ? 'var(--ink)' : done ? 'var(--ok)' : 'var(--ink-3)' }}>
+                    {label}
+                  </span>
+                </div>
+                {i < 2 && <span className="flex-1 h-px w-4" style={{ background: 'var(--line)' }}/>}
+              </div>
+            )
+          })}
+        </div>
 
         {/* PASO 1: Servicio */}
         <section className="mb-8">
-          <h2 className="text-xs text-muted uppercase tracking-widest mb-3">Servicio</h2>
+          <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'var(--primary)' }}>Tratamiento</p>
           <div className="flex flex-col gap-2">
-            {services.map(s => (
-              <button
-                key={s.id}
-                onClick={() => { setSelectedService(s); setStep('date') }}
-                className={`flex items-center justify-between p-4 rounded-xl border transition-colors text-left
-                  ${selectedService?.id === s.id
-                    ? 'border-gold bg-gold/10 text-cream'
-                    : 'border-border bg-bg-card text-cream hover:border-gold/50'}`}
-              >
-                <span className="font-medium">{s.name}</span>
-                <div className="text-right">
-                  {s.price && <span className="text-gold font-semibold">{s.price.toFixed(2)} €</span>}
-                  <span className="block text-xs text-muted">{s.duration_minutes} min</span>
-                </div>
-              </button>
-            ))}
+            {services.map(s => {
+              const sel = selectedService?.id === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSelectedService(s)}
+                  className="flex items-center justify-between p-4 rounded-2xl text-left transition-all"
+                  style={sel
+                    ? { background: 'var(--primary-soft)', border: '1.5px solid var(--primary)' }
+                    : { background: 'var(--card)', border: '1px solid var(--line)' }
+                  }
+                >
+                  <span className="font-semibold text-sm" style={{ color: sel ? 'var(--primary-deep)' : 'var(--ink)' }}>{s.name}</span>
+                  <div className="text-right ml-4">
+                    {s.price != null && (
+                      <span className="font-bold text-base block" style={{ color: sel ? 'var(--primary)' : 'var(--ink-2)' }}>
+                        {s.price.toFixed(2)} €
+                      </span>
+                    )}
+                    <span className="text-xs" style={{ color: 'var(--ink-3)' }}>{s.duration_minutes} min</span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </section>
 
         {/* PASO 2: Fecha */}
         {selectedService && (
           <section className="mb-8">
-            <h2 className="text-xs text-muted uppercase tracking-widest mb-3">Fecha</h2>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'var(--primary)' }}>Día</p>
+            <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
               {calendarDays.map(d => {
                 const isSelected = selectedDate && format(d, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
                 return (
                   <button
                     key={d.toISOString()}
-                    onClick={() => { setSelectedDate(d); setStep('time') }}
-                    className={`flex-shrink-0 flex flex-col items-center py-3 px-3 rounded-xl border transition-colors min-w-[56px]
-                      ${isSelected
-                        ? 'border-gold bg-gold/10 text-cream'
-                        : 'border-border bg-bg-card text-cream hover:border-gold/50'}`}
+                    onClick={() => setSelectedDate(d)}
+                    className="flex-shrink-0 flex flex-col items-center py-3 px-3 rounded-xl transition-all min-w-[56px]"
+                    style={isSelected
+                      ? { background: 'var(--primary)', border: '1.5px solid var(--primary)' }
+                      : { background: 'var(--card)', border: '1px solid var(--line)' }
+                    }
                   >
-                    <span className="text-xs text-muted">{DAYS_ES[d.getDay()]}</span>
-                    <span className="text-lg font-semibold mt-0.5">{d.getDate()}</span>
-                    <span className="text-xs text-muted">{format(d, 'MMM', { locale: es })}</span>
+                    <span className="text-[10px] font-semibold" style={{ color: isSelected ? 'rgba(255,255,255,0.75)' : 'var(--ink-3)' }}>
+                      {DAYS_ES[d.getDay()]}
+                    </span>
+                    <span className="text-lg font-bold mt-0.5" style={{ color: isSelected ? '#fff' : 'var(--ink)' }}>
+                      {d.getDate()}
+                    </span>
+                    <span className="text-[10px]" style={{ color: isSelected ? 'rgba(255,255,255,0.75)' : 'var(--ink-3)' }}>
+                      {format(d, 'MMM', { locale: es })}
+                    </span>
                   </button>
                 )
               })}
@@ -117,25 +165,29 @@ export default function SelectPage() {
         {/* PASO 3: Hora */}
         {selectedService && selectedDate && (
           <section className="mb-8">
-            <h2 className="text-xs text-muted uppercase tracking-widest mb-3">Hora</h2>
+            <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'var(--primary)' }}>Hora</p>
             {loadingSlots ? (
-              <p className="text-muted text-sm">Cargando horas disponibles...</p>
+              <p className="text-sm" style={{ color: 'var(--ink-3)' }}>Cargando horas disponibles...</p>
             ) : slots.length === 0 ? (
-              <p className="text-muted text-sm">No hay horas disponibles este día</p>
+              <p className="text-sm" style={{ color: 'var(--ink-3)' }}>No hay horas disponibles este día</p>
             ) : (
               <div className="grid grid-cols-4 gap-2">
-                {slots.map(slot => (
-                  <button
-                    key={slot}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`py-2.5 rounded-lg border text-sm font-medium transition-colors
-                      ${selectedSlot === slot
-                        ? 'border-gold bg-gold text-bg'
-                        : 'border-border bg-bg-card text-cream hover:border-gold/50'}`}
-                  >
-                    {slot}
-                  </button>
-                ))}
+                {slots.map(slot => {
+                  const sel = selectedSlot === slot
+                  return (
+                    <button
+                      key={slot}
+                      onClick={() => setSelectedSlot(slot)}
+                      className="py-2.5 rounded-xl text-sm font-semibold transition-all"
+                      style={sel
+                        ? { background: 'var(--primary)', color: '#fff', border: '1.5px solid var(--primary)' }
+                        : { background: 'var(--card)', color: 'var(--ink)', border: '1px solid var(--line)' }
+                      }
+                    >
+                      {slot}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </section>
@@ -145,10 +197,12 @@ export default function SelectPage() {
         <button
           onClick={handleContinue}
           disabled={!selectedService || !selectedDate || !selectedSlot}
-          className="w-full bg-gold hover:bg-gold-dark text-bg font-semibold rounded-xl py-4 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full py-4 font-semibold text-base transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius)' }}
         >
-          Confirmar cita →
+          Continuar →
         </button>
+
       </div>
     </main>
   )

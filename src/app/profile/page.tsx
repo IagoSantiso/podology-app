@@ -3,20 +3,27 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { createSupabaseClient } from '@/lib/supabase-client'
 
 interface Service { id: string; name: string }
 interface Profile {
-  full_name: string
-  phone: string
-  preferred_service_id: string | null
-  notes_for_podologist: string
+  full_name: string; phone: string
+  preferred_service_id: string | null; notes_for_podologist: string
 }
+interface NextAppointment {
+  id: string; appointment_date: string; start_time: string
+  services: { name: string } | null
+}
+
+const INPUT = "w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition-colors"
 
 export default function ProfilePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile>({ full_name: '', phone: '', preferred_service_id: null, notes_for_podologist: '' })
   const [services, setServices] = useState<Service[]>([])
+  const [nextApt, setNextApt] = useState<NextAppointment | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -24,29 +31,35 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const supabase = createSupabaseClient()
-
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/book/login'); return }
       setEmail(user.email ?? '')
 
-      const [{ data: prof }, { data: svcs }] = await Promise.all([
+      const today = new Date().toISOString().slice(0, 10)
+      const [{ data: prof }, { data: svcs }, { data: apts }] = await Promise.all([
         supabase.from('client_profiles').select('*').eq('id', user.id).single(),
         supabase.from('services').select('id, name').eq('is_active', true),
+        supabase.from('appointments')
+          .select('id, appointment_date, start_time, services(name)')
+          .eq('client_user_id', user.id)
+          .eq('status', 'confirmed')
+          .gte('appointment_date', today)
+          .order('appointment_date').order('start_time')
+          .limit(1),
       ])
 
       if (prof) {
         setProfile({
-          full_name: prof.full_name ?? '',
-          phone: prof.phone ?? '',
+          full_name: prof.full_name ?? '', phone: prof.phone ?? '',
           preferred_service_id: prof.preferred_service_id ?? null,
           notes_for_podologist: prof.notes_for_podologist ?? '',
         })
       }
       setServices(svcs ?? [])
+      setNextApt((apts?.[0] as unknown as NextAppointment) ?? null)
       setLoading(false)
     }
-
     load()
   }, [router])
 
@@ -55,18 +68,12 @@ export default function ProfilePage() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     await supabase.from('client_profiles').upsert({
-      id: user.id,
-      full_name: profile.full_name,
-      phone: profile.phone,
+      id: user.id, full_name: profile.full_name, phone: profile.phone,
       preferred_service_id: profile.preferred_service_id || null,
       notes_for_podologist: profile.notes_for_podologist,
     })
-
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
 
   async function logout() {
@@ -76,88 +83,140 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <main className="min-h-screen flex items-center justify-center"><p className="text-muted">Cargando...</p></main>
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <p style={{ color: 'var(--ink-3)' }}>Cargando...</p>
+      </main>
+    )
   }
 
+  const initials = profile.full_name
+    ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : email.slice(0, 2).toUpperCase()
+
   return (
-    <main className="min-h-screen px-4 py-10 max-w-md mx-auto">
+    <main className="min-h-screen px-5 py-10 max-w-md mx-auto" style={{ background: 'var(--bg)' }}>
+
+      {/* Header con avatar */}
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-cream">Mi perfil</h1>
-          <p className="text-muted text-sm mt-0.5">{email}</p>
+        <div className="flex items-center gap-3.5">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
+            style={{ background: 'var(--primary)', color: '#fff' }}
+          >
+            {initials}
+          </div>
+          <div>
+            <p className="font-semibold" style={{ color: 'var(--ink)' }}>{profile.full_name || 'Mi perfil'}</p>
+            <p className="text-xs" style={{ color: 'var(--ink-3)' }}>{email}</p>
+          </div>
         </div>
-        <button onClick={logout} className="text-sm text-muted hover:text-red-400 transition-colors">Salir</button>
+        <button onClick={logout} className="text-sm transition-opacity hover:opacity-70" style={{ color: 'var(--danger)' }}>Salir</button>
       </div>
 
-      <div className="flex flex-col gap-5">
+      {/* Próxima cita */}
+      {nextApt && (
+        <div
+          className="rounded-2xl p-4 mb-6"
+          style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary)' }}
+        >
+          <p className="text-xs font-bold tracking-[0.18em] uppercase mb-2" style={{ color: 'var(--primary)' }}>Próxima cita</p>
+          <p className="font-semibold" style={{ color: 'var(--primary-deep)' }}>{nextApt.services?.name ?? '—'}</p>
+          <p className="text-sm capitalize mt-0.5" style={{ color: 'var(--primary)' }}>
+            {format(new Date(nextApt.appointment_date + 'T00:00:00'), "EEEE d 'de' MMMM", { locale: es })} · {nextApt.start_time.slice(0, 5)}h
+          </p>
+          <div className="flex gap-2 mt-3">
+            <Link
+              href={`/reschedule?id=${nextApt.id}`}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-center transition-opacity hover:opacity-80"
+              style={{ background: 'var(--card)', color: 'var(--primary)', border: '1px solid var(--primary)' }}
+            >
+              Reprogramar
+            </Link>
+            <Link
+              href={`/cancel?id=${nextApt.id}`}
+              className="flex-1 py-2 rounded-xl text-xs font-semibold text-center transition-opacity hover:opacity-80"
+              style={{ background: 'var(--card)', color: 'var(--danger)', border: '1px solid var(--line)' }}
+            >
+              Cancelar
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Formulario de datos */}
+      <div className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm text-muted mb-1.5">Nombre completo</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Nombre completo</label>
           <input
             value={profile.full_name}
             onChange={e => setProfile(p => ({ ...p, full_name: e.target.value }))}
             placeholder="Tu nombre"
-            className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold"
+            className={INPUT}
+            style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
           />
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">Teléfono</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Teléfono</label>
           <input
-            type="tel"
-            value={profile.phone}
+            type="tel" value={profile.phone}
             onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))}
             placeholder="+34 600 000 000"
-            className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold"
+            className={INPUT}
+            style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
           />
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">Servicio preferido</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Servicio preferido</label>
           <select
             value={profile.preferred_service_id ?? ''}
             onChange={e => setProfile(p => ({ ...p, preferred_service_id: e.target.value || null }))}
-            className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream focus:outline-none focus:border-gold"
+            className={INPUT}
+            style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
           >
             <option value="">Sin preferencia</option>
-            {services.map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
+            {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">Notas para la podóloga</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--ink-3)' }}>Notas para la podóloga</label>
           <textarea
             value={profile.notes_for_podologist}
             onChange={e => setProfile(p => ({ ...p, notes_for_podologist: e.target.value }))}
-            placeholder="Ej: Uña encarnada pie derecho, sensibilidad en talón izquierdo..."
+            placeholder="Ej: Uña encarnada pie derecho, sensibilidad en talón..."
             rows={3}
-            className="w-full bg-bg-input border border-border rounded-lg px-4 py-3 text-cream placeholder-muted focus:outline-none focus:border-gold resize-none text-sm"
+            className={`${INPUT} resize-none`}
+            style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink)' }}
           />
         </div>
 
         <button
-          onClick={save}
-          disabled={saving}
-          className="bg-gold hover:bg-gold-dark text-bg font-semibold rounded-xl py-3.5 transition-colors disabled:opacity-50"
+          onClick={save} disabled={saving}
+          className="py-3.5 rounded-2xl font-semibold transition-opacity disabled:opacity-50"
+          style={{ background: 'var(--primary)', color: '#fff' }}
         >
           {saved ? '✓ Guardado' : saving ? 'Guardando...' : 'Guardar perfil'}
         </button>
 
         <Link
           href="/profile/history"
-          className="block text-center border border-border hover:border-gold text-cream rounded-xl py-3.5 text-sm transition-colors"
+          className="flex items-center justify-between py-4 px-5 rounded-2xl font-medium text-sm transition-opacity hover:opacity-80"
+          style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}
         >
-          Ver historial de visitas →
+          Mis visitas
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
         </Link>
 
-        <Link
-          href="/book/select"
-          className="block text-center text-gold hover:underline text-sm mt-2"
-        >
-          Reservar nueva cita
+        <Link href="/book/select" className="text-center text-sm transition-opacity hover:opacity-70" style={{ color: 'var(--primary)' }}>
+          Reservar nueva cita →
         </Link>
       </div>
+
     </main>
   )
 }

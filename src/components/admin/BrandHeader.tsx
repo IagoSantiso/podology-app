@@ -14,37 +14,57 @@ export default function BrandHeader({ section }: { section: string }) {
     fetch('/api/public/config')
       .then(r => r.json())
       .then(d => {
-        cached = { business_name: d.business_name ?? 'PodologyApp', logo_url: d.logo_url ?? null }
+        cached = { business_name: d.business_name ?? 'Patricia Podología', logo_url: d.logo_url ?? null }
         setBrand(cached)
       })
       .catch(() => {})
   }, [])
 
+  const name = brand?.business_name ?? 'Patricia Podología'
+  const [firstName, ...rest] = name.split(' ')
+  const lastName = rest.join(' ')
+
   return (
-    <div className="flex items-center gap-2.5 px-5 pt-3.5">
-      <span className="w-[26px] h-[26px] rounded-sm border border-gold/35 inline-flex items-center justify-center text-gold overflow-hidden shrink-0">
+    <div className="flex items-center gap-3 px-5 pt-4">
+      <span
+        className="w-8 h-8 rounded-[10px] shrink-0 overflow-hidden inline-flex items-center justify-center"
+        style={{ background: 'var(--primary)' }}
+      >
         {brand?.logo_url
-          ? <img src={brand.logo_url} alt="" className="w-full h-full object-cover"/>
-          : <Scissors className="w-3 h-3"/>
+          ? <img src={brand.logo_url} alt="" className="w-full h-full object-cover" />
+          : <FootArchMark />
         }
       </span>
       <div className="leading-none">
-        <div className="font-display italic text-[14px] text-cream">
-          {brand?.business_name ?? <span className="opacity-0">·</span>}
+        <div className="leading-tight" style={{ color: 'var(--ink)' }}>
+          <span className="font-display italic text-[15px]">{firstName}</span>
+          {lastName && (
+            <span className="font-sans font-semibold text-[11px] tracking-[0.12em] uppercase ml-1.5" style={{ color: 'var(--ink-2)' }}>
+              {lastName}
+            </span>
+          )}
         </div>
-        <div className="text-[9px] tracking-[0.22em] uppercase text-muted mt-0.5 font-semibold">{section}</div>
+        <div
+          className="text-[9px] tracking-[0.22em] uppercase font-bold mt-0.5"
+          style={{ color: 'var(--primary)' }}
+        >
+          {section}
+        </div>
       </div>
     </div>
   )
 }
 
-function Scissors({ className = '' }) {
+function FootArchMark() {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-      <line x1="20" y1="4" x2="8.12" y2="15.88"/>
-      <line x1="14.47" y1="14.48" x2="20" y2="20"/>
-      <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path
+        d="M3 14 Q3 6 9 5 Q15 6 15 14"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
     </svg>
   )
 }

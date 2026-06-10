@@ -149,3 +149,18 @@ create policy "Cliente registrado ve su historial" on visit_history
 
 create policy "Podóloga puede ver y escribir historial" on visit_history
   for all using (true);
+
+-- Rangos de vacaciones de la podóloga
+create table if not exists vacations (
+  id uuid primary key default gen_random_uuid(),
+  start_date date not null,
+  end_date date not null,
+  reason text default '',
+  created_at timestamptz default now(),
+  check (end_date >= start_date)
+);
+
+alter table vacations enable row level security;
+
+create policy "Lectura pública de vacaciones" on vacations
+  for select using (true);

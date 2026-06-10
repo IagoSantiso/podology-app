@@ -1,40 +1,41 @@
 import type { Metadata } from 'next'
-import { Playfair_Display, DM_Sans } from 'next/font/google'
+import { Newsreader, Hanken_Grotesk } from 'next/font/google'
 import './globals.css'
 
-const playfair = Playfair_Display({
-  variable: '--font-playfair',
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-})
-
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
   subsets: ['latin'],
   weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+})
+
+const hanken = Hanken_Grotesk({
+  variable: '--font-hanken',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
-  title: 'Podología — Reserva tu cita',
+  title: 'Patricia Podología — Reserva tu cita',
   description: 'Reserva tu cita online en segundos.',
-  applicationName: 'Podology-app',
+  applicationName: 'Patricia Podología',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Podology-app',
+    statusBarStyle: 'default',
+    title: 'Patricia Podología',
   },
   formatDetection: { telephone: false },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${playfair.variable} ${dmSans.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-bg text-cream antialiased">
+    <html lang="es" className={`${newsreader.variable} ${hanken.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-bg text-ink antialiased">
         {children}
-        <footer className="text-center text-xs text-gray-600 py-4">
-          <a href="/privacidad" className="hover:text-amber-500 mr-4">Privacidad</a>
-          <a href="/aviso-legal" className="hover:text-amber-500">Aviso legal</a>
+        <footer className="text-center text-xs text-ink-3 py-4">
+          <a href="/privacidad" className="hover:text-primary mr-4">Privacidad</a>
+          <a href="/aviso-legal" className="hover:text-primary">Aviso legal</a>
         </footer>
       </body>
     </html>
