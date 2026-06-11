@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format, addDays, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { createSupabaseClient } from '@/lib/supabase-client'
+import type { User } from '@supabase/supabase-js'
 
-interface Service { id: string; name: string; duration_minutes: number; price: number | null }
+interface Service { id: string; name: string; description: string | null; duration_minutes: number; price: number | null }
 
 const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
@@ -19,6 +21,7 @@ export default function SelectPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [calendarDays, setCalendarDays] = useState<Date[]>([])
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     fetch('/api/services')
@@ -30,6 +33,8 @@ export default function SelectPage() {
     const days: Date[] = []
     for (let i = 0; i < 60; i++) days.push(addDays(today, i))
     setCalendarDays(days)
+
+    createSupabaseClient().auth.getUser().then(({ data }) => setUser(data.user))
   }, [])
 
   useEffect(() => {
@@ -48,6 +53,7 @@ export default function SelectPage() {
     sessionStorage.setItem('booking', JSON.stringify({
       serviceId: selectedService.id,
       serviceName: selectedService.name,
+      serviceDescription: selectedService.description,
       servicePrice: selectedService.price,
       date: format(selectedDate, 'yyyy-MM-dd'),
       time: selectedSlot,
@@ -61,12 +67,37 @@ export default function SelectPage() {
     <main className="min-h-screen flex flex-col px-5 py-10" style={{ background: 'var(--bg)' }}>
       <div className="w-full max-w-md mx-auto">
 
-        <Link href="/book/login" className="inline-flex items-center gap-1.5 text-sm mb-8 transition-opacity hover:opacity-70" style={{ color: 'var(--ink-3)' }}>
+        <Link href="/book/login" className="inline-flex items-center gap-1.5 text-sm mb-6 transition-opacity hover:opacity-70" style={{ color: 'var(--ink-3)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
           Volver
         </Link>
+
+        {/* Acceso rápido al historial si el usuario está autenticado */}
+        {user && (
+          <Link
+            href="/profile/history?from=book"
+            className="flex items-center justify-between rounded-2xl p-4 mb-6 transition-all hover:opacity-90"
+            style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                style={{ background: 'var(--primary)', color: '#fff' }}
+              >
+                {user.email?.[0].toUpperCase() ?? '?'}
+              </div>
+              <div>
+                <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--primary-deep)' }}>Mis visitas anteriores</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--primary)' }}>Ver historial de tratamientos</p>
+              </div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </Link>
+        )}
 
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-8">
@@ -114,7 +145,12 @@ export default function SelectPage() {
                     : { background: 'var(--card)', border: '1px solid var(--line)' }
                   }
                 >
-                  <span className="font-semibold text-sm" style={{ color: sel ? 'var(--primary-deep)' : 'var(--ink)' }}>{s.name}</span>
+                  <div>
+                    <span className="font-semibold text-sm" style={{ color: sel ? 'var(--primary-deep)' : 'var(--ink)' }}>{s.name}</span>
+                    {s.description && (
+                      <p className="text-xs mt-0.5 leading-snug" style={{ color: sel ? 'var(--primary-deep)' : 'var(--ink-3)' }}>{s.description}</p>
+                    )}
+                  </div>
                   <div className="text-right ml-4">
                     {s.price != null && (
                       <span className="font-bold text-base block" style={{ color: sel ? 'var(--primary)' : 'var(--ink-2)' }}>

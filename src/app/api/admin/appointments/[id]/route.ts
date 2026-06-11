@@ -25,7 +25,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.status !== undefined) updates.status = body.status
   if (body.delay_minutes !== undefined) updates.delay_minutes = body.delay_minutes
   if (body.delay_notified !== undefined) updates.delay_notified = body.delay_notified
-  if (body.podologist_notes !== undefined) updates.podologist_notes = body.podologist_notes
 
   // ── Reschedule: allow changing date, time, or service ─────────────────────
   const isReschedule =
@@ -97,12 +96,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // 1. Completion → visit_history
   if (body.status === 'completed' && data) {
     await supabase.from('visit_history').insert({
-      appointment_id:  data.id,
-      client_user_id:  data.client_user_id ?? null,
-      client_email:    data.client_email,
-      service_id:      data.service_id,
-      visit_date:      data.appointment_date,
-      podologist_notes: body.podologist_notes ?? null,
+      appointment_id:          data.id,
+      client_user_id:          data.client_user_id ?? null,
+      client_email:            data.client_email,
+      service_id:              data.service_id,
+      visit_date:              data.appointment_date,
+      clinical_notes:          body.clinical_notes ?? null,
+      treatment_name:          body.treatment_name ?? null,
+      treatment_instructions:  body.treatment_instructions ?? null,
+      podologist_notes:        body.podologist_notes ?? null,
     })
   }
 

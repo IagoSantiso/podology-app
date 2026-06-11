@@ -47,8 +47,8 @@ export default async function PrivacidadPage() {
 
       <Section title="2. Datos personales que tratamos">
         <p>
-          Con ocasión de la utilización de nuestra plataforma de reservas online, {c.business_name} podrá
-          tratar las siguientes categorías de datos personales:
+          Con ocasión de la utilización de nuestra plataforma de reservas online y la prestación de los
+          servicios podológicos, {c.business_name} podrá tratar las siguientes categorías de datos personales:
         </p>
         <ul className="mt-3 space-y-1 list-none">
           <li>— Datos identificativos: nombre y apellidos.</li>
@@ -57,14 +57,17 @@ export default async function PrivacidadPage() {
             — Datos de la prestación del servicio: fecha y hora de la cita, tipo de servicio solicitado e
             historial de visitas cuando el usuario dispone de cuenta registrada.
           </li>
+          <li>
+            — <strong className="text-cream">Datos de salud (categoría especial, art. 9 RGPD):</strong> notas
+            clínicas de la visita, tratamientos y productos prescritos, y pautas de uso, registrados por la
+            podóloga durante o tras la consulta y vinculados a la historia clínica del paciente. Estos datos
+            únicamente serán accesibles por el titular del tratamiento y la podóloga responsable.
+          </li>
         </ul>
-        <p className="mt-3">
-          No se tratan datos especialmente protegidos en el sentido del artículo 9 del RGPD.
-        </p>
       </Section>
 
       <Section title="3. Finalidad del tratamiento">
-        <p>Los datos personales facilitados a través del formulario de reserva serán tratados con las siguientes finalidades:</p>
+        <p>Los datos personales facilitados a través del formulario de reserva y en el marco de la consulta serán tratados con las siguientes finalidades:</p>
         <div className="mt-3 space-y-3">
           <p>
             <strong className="text-cream">a) Gestión de la reserva:</strong> tramitar, confirmar y gestionar la cita
@@ -72,12 +75,19 @@ export default async function PrivacidadPage() {
             de modificación o cancelación.
           </p>
           <p>
-            <strong className="text-cream">b) Historial de servicios:</strong> cuando el usuario dispone de cuenta
+            <strong className="text-cream">b) Historia clínica y asistencia sanitaria:</strong> elaborar y mantener
+            la historia clínica del paciente de conformidad con la Ley 41/2002, de 14 de noviembre, básica reguladora
+            de la autonomía del paciente, con el fin de garantizar una atención podológica adecuada, registrar los
+            tratamientos prescritos y posibilitar el seguimiento del estado de salud del paciente a lo largo del tiempo.
+            El paciente puede acceder a sus propias notas clínicas y tratamientos registrados desde su área privada.
+          </p>
+          <p>
+            <strong className="text-cream">c) Historial de servicios:</strong> cuando el usuario dispone de cuenta
             registrada, conservar un registro de los servicios recibidos con el fin de facilitar futuras reservas
             y mejorar la atención personalizada.
           </p>
           <p>
-            <strong className="text-cream">c) Comunicaciones operativas:</strong> envío de notificaciones relacionadas
+            <strong className="text-cream">d) Comunicaciones operativas:</strong> envío de notificaciones relacionadas
             exclusivamente con el estado de la reserva (confirmación, cambio de horario, cancelación). En ningún caso
             se realizarán comunicaciones comerciales sin consentimiento expreso e independiente.
           </p>
@@ -85,18 +95,30 @@ export default async function PrivacidadPage() {
       </Section>
 
       <Section title="4. Base jurídica del tratamiento">
-        <p>El tratamiento de sus datos se fundamenta en las siguientes bases jurídicas previstas en el artículo 6 del RGPD:</p>
+        <p>El tratamiento de sus datos se fundamenta en las siguientes bases jurídicas:</p>
         <ul className="mt-3 space-y-2 list-none">
           <li>
-            — <strong className="text-cream">Ejecución de una relación contractual o precontractual (art. 6.1.b):</strong>{' '}
+            — <strong className="text-cream">Ejecución de una relación contractual o precontractual (art. 6.1.b RGPD):</strong>{' '}
             el tratamiento es necesario para gestionar la reserva solicitada por el interesado.
           </li>
           <li>
-            — <strong className="text-cream">Consentimiento del interesado (art. 6.1.a):</strong> para el tratamiento
+            — <strong className="text-cream">Consentimiento del interesado (art. 6.1.a RGPD):</strong> para el tratamiento
             del historial de servicios en cuentas registradas, obtenido mediante aceptación expresa en el momento
             del registro.
           </li>
+          <li>
+            — <strong className="text-cream">Asistencia sanitaria y elaboración de historia clínica (art. 9.2.h RGPD):</strong>{' '}
+            el tratamiento de datos de salud (notas clínicas, tratamientos prescritos) es necesario para la prestación
+            de asistencia sanitaria de conformidad con la Ley 41/2002, de 14 de noviembre, básica reguladora de la
+            autonomía del paciente y de derechos y obligaciones en materia de información y documentación clínica.
+            Este tratamiento se realiza bajo la responsabilidad de la podóloga titular, sujeta a secreto profesional.
+          </li>
         </ul>
+        <p className="mt-3">
+          De acuerdo con el artículo 15 del RGPD y el artículo 18 de la Ley 41/2002, el paciente tiene derecho
+          a acceder a su historia clínica. Este acceso se facilita a través del área privada de la plataforma,
+          donde el paciente puede consultar sus notas clínicas y tratamientos registrados.
+        </p>
       </Section>
 
       <Section title="5. Plazo de conservación">

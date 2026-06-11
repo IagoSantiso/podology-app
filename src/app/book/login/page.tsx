@@ -14,8 +14,9 @@ function LoginContent() {
   const searchParams = useSearchParams()
   const authError = searchParams.get('error')
 
-  const [showLogin, setShowLogin] = useState(false)
-  const [mode, setMode] = useState<Mode>('login')
+  const action = searchParams.get('action')
+  const [showLogin, setShowLogin] = useState(action === 'signup')
+  const [mode, setMode] = useState<Mode>(action === 'signup' ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -107,7 +108,7 @@ function LoginContent() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-base mb-0.5" style={{ color: 'var(--primary-deep)' }}>Reservar como invitada</p>
+              <p className="font-semibold text-base mb-0.5" style={{ color: 'var(--primary-deep)' }}>Reservar como invitado</p>
               <p className="text-sm" style={{ color: 'var(--primary)' }}>Rápido, sin necesidad de cuenta</p>
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--primary)', flexShrink: 0 }}>

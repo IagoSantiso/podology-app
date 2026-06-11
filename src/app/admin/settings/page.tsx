@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import LogoCropModal from '@/components/LogoCropModal'
 import BrandHeader from '@/components/admin/BrandHeader'
-import { createSupabaseClient } from '@/lib/supabase-client'
 
 interface Config {
-  podologist_phone: string; alarm_margin_minutes: number; delay_message_template: string
+  podologist_phone: string; delay_message_template: string
   business_name: string; business_address: string; owner_email: string; logo_url: string | null
   admin_password: string | null; reschedule_cutoff_hours: number; reminder_first_hours: number
   reminder_second_hours: number; owner_name: string; nif: string; address: string
@@ -15,7 +14,7 @@ interface Config {
 }
 
 const DEFAULTS: Config = {
-  podologist_phone: '', alarm_margin_minutes: 60, delay_message_template: '',
+  podologist_phone: '', delay_message_template: '',
   business_name: 'Patricia Podología', business_address: '', owner_email: '',
   logo_url: null, admin_password: null, reschedule_cutoff_hours: 2,
   reminder_first_hours: 12, reminder_second_hours: 2, owner_name: '', nif: '',
@@ -84,9 +83,12 @@ export default function SettingsPage() {
     setPassError('')
     if (!newPassword || newPassword.length < 4) { setPassError('Mínimo 4 caracteres'); return }
     if (newPassword !== confirmPassword) { setPassError('Las contraseñas no coinciden'); return }
-    const supabase = createSupabaseClient()
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) { setPassError('Error al cambiar la contraseña'); return }
+    const res = await fetch('/api/admin/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admin_password: newPassword }),
+    })
+    if (!res.ok) { setPassError('Error al cambiar la contraseña'); return }
     setNewPassword(''); setConfirmPassword(''); setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
   }
 
@@ -129,28 +131,7 @@ export default function SettingsPage() {
           </p>
         </EssentialCard>
 
-        {/* 2 — Margen alarma */}
-        <EssentialCard icon={<BellIcon />} title="Margen de alarma"
-          subtitle="Cuánto antes de la primera cita quieres recibir el aviso por la mañana.">
-          <div className="flex gap-1.5 flex-wrap">
-            {[30,45,60,90,120].map(m => {
-              const on = config.alarm_margin_minutes === m
-              return (
-                <button key={m} onClick={() => setConfig(p => ({ ...p, alarm_margin_minutes: m }))}
-                  className="flex-1 min-w-[55px] py-2.5 rounded-xl font-semibold transition-colors"
-                  style={on
-                    ? { background: 'var(--primary-soft)', border: '1.5px solid var(--primary)', color: 'var(--primary)' }
-                    : { background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink-2)' }
-                  }>
-                  <span className="font-display font-bold text-base">{m}</span>
-                  <span className="text-[9px] ml-0.5" style={{ color: on ? 'var(--primary)' : 'var(--ink-3)' }}>min</span>
-                </button>
-              )
-            })}
-          </div>
-        </EssentialCard>
-
-        {/* 3 — Mensaje retraso */}
+        {/* 2 — Mensaje retraso */}
         <EssentialCard icon={<MessageIcon />} title="Mensaje de retraso"
           subtitle="Plantilla WhatsApp cuando avisas que llegarás tarde.">
           <textarea value={config.delay_message_template}
@@ -244,20 +225,14 @@ export default function SettingsPage() {
 
             {/* Notificaciones push */}
             <AdvSection title="Notificaciones push">
-              <div className="p-3 rounded-xl flex items-center gap-3" style={{ background: 'var(--field)', border: '1px solid var(--line)' }}>
-                {notifPermission === 'granted' ? (<>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--ok)' }}/>
-                  <span className="text-sm" style={{ color: 'var(--ink)' }}>Activas en este dispositivo</span>
-                </>) : notifPermission === 'denied' ? (
-                  <span className="text-sm" style={{ color: 'var(--ink-3)' }}>Bloqueadas en el navegador.</span>
-                ) : (
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-sm" style={{ color: 'var(--ink)' }}>Activa las notificaciones</span>
-                    <button onClick={requestNotif}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                      style={{ background: 'var(--primary)', color: '#fff' }}>Activar</button>
-                  </div>
-                )}
+              <div className="p-3 rounded-xl flex items-center justify-between" style={{ background: 'var(--field)', border: '1px solid var(--line)' }}>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--ink-3)' }}/>
+                  <span className="text-sm" style={{ color: 'var(--ink-3)' }}>Desactivadas</span>
+                </div>
+                <a href="/admin/settings/notificaciones"
+                  className="text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-70"
+                  style={{ color: 'var(--primary)' }}>¿Cómo activarlas?</a>
               </div>
             </AdvSection>
 
@@ -290,7 +265,7 @@ export default function SettingsPage() {
                 { key: 'contact_email', label: 'Email de contacto', type: 'email' },
               ].map(f => (
                 <SmallField key={f.key} label={f.label}>
-                  <input type={f.type} value={config[f.key as keyof Config] as string}
+                  <input type={f.type} value={(config[f.key as keyof Config] as string) ?? ''}
                     onChange={e => setConfig(p => ({ ...p, [f.key]: e.target.value }))}
                     className={SMALL_INPUT} style={{ background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--ink)' }}/>
                 </SmallField>
@@ -303,7 +278,7 @@ export default function SettingsPage() {
                 </select>
               </SmallField>
               <p className="text-xs font-display italic" style={{ color: 'var(--ink-3)' }}>
-                Estos datos rellenan automáticamente las páginas /privacidad y /aviso-legal.
+                Estos datos rellenan automáticamente las páginas <a href="/privacidad" className="underline hover:opacity-70">/privacidad</a> y <a href="/aviso-legal" className="underline hover:opacity-70">/aviso-legal</a>.
               </p>
             </AdvSection>
 

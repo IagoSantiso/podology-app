@@ -16,6 +16,10 @@ interface NextAppointment {
   id: string; appointment_date: string; start_time: string
   services: { name: string } | null
 }
+interface PastAppointment {
+  id: string; appointment_date: string; start_time: string
+  services: { name: string; price: number | null } | null
+}
 
 const INPUT = "w-full px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition-colors"
 
@@ -24,6 +28,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile>({ full_name: '', phone: '', preferred_service_id: null, notes_for_podologist: '' })
   const [services, setServices] = useState<Service[]>([])
   const [nextApt, setNextApt] = useState<NextAppointment | null>(null)
+  const [pastApts, setPastApts] = useState<PastAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -37,7 +42,7 @@ export default function ProfilePage() {
       setEmail(user.email ?? '')
 
       const today = new Date().toISOString().slice(0, 10)
-      const [{ data: prof }, { data: svcs }, { data: apts }] = await Promise.all([
+      const [{ data: prof }, { data: svcs }, { data: apts }, { data: past }] = await Promise.all([
         supabase.from('client_profiles').select('*').eq('id', user.id).single(),
         supabase.from('services').select('id, name').eq('is_active', true),
         supabase.from('appointments')
@@ -47,6 +52,13 @@ export default function ProfilePage() {
           .gte('appointment_date', today)
           .order('appointment_date').order('start_time')
           .limit(1),
+        supabase.from('appointments')
+          .select('id, appointment_date, start_time, services(name, price)')
+          .eq('client_user_id', user.id)
+          .in('status', ['confirmed', 'completed'])
+          .lt('appointment_date', today)
+          .order('appointment_date', { ascending: false })
+          .limit(5),
       ])
 
       if (prof) {
@@ -58,6 +70,7 @@ export default function ProfilePage() {
       }
       setServices(svcs ?? [])
       setNextApt((apts?.[0] as unknown as NextAppointment) ?? null)
+      setPastApts((past as unknown as PastAppointment[]) ?? [])
       setLoading(false)
     }
     load()
@@ -201,12 +214,42 @@ export default function ProfilePage() {
           {saved ? '✓ Guardado' : saving ? 'Guardando...' : 'Guardar perfil'}
         </button>
 
+        {/* Historial de citas */}
+        <div>
+          <p className="text-xs font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'var(--primary)' }}>Historial de citas</p>
+          {pastApts.length === 0 ? (
+            <p className="text-sm py-2" style={{ color: 'var(--ink-3)' }}>No tienes citas anteriores registradas.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {pastApts.map(apt => (
+                <div
+                  key={apt.id}
+                  className="flex items-center justify-between px-4 py-3 rounded-2xl"
+                  style={{ background: 'var(--card)', border: '1px solid var(--line)' }}
+                >
+                  <div>
+                    <p className="font-semibold text-sm" style={{ color: 'var(--ink)' }}>{apt.services?.name ?? '—'}</p>
+                    <p className="text-xs capitalize mt-0.5" style={{ color: 'var(--ink-3)' }}>
+                      {format(new Date(apt.appointment_date + 'T00:00:00'), "d 'de' MMMM 'de' yyyy", { locale: es })} · {apt.start_time.slice(0, 5)}h
+                    </p>
+                  </div>
+                  {apt.services?.price != null && (
+                    <span className="text-sm font-semibold shrink-0 ml-3" style={{ color: 'var(--ink-3)' }}>
+                      {Number(apt.services.price).toFixed(2)} €
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Link
           href="/profile/history"
           className="flex items-center justify-between py-4 px-5 rounded-2xl font-medium text-sm transition-opacity hover:opacity-80"
           style={{ background: 'var(--card)', border: '1px solid var(--line)', color: 'var(--ink-2)' }}
         >
-          Mis visitas
+          Ver notas de la podóloga
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="9 18 15 12 9 6"/>
           </svg>

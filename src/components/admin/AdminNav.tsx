@@ -35,11 +35,19 @@ const SettingsIcon = ({ active }: { active: boolean }) => (
   </svg>
 )
 
+const TagIcon = ({ active }: { active: boolean }) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+    <line x1="7" y1="7" x2="7.01" y2="7"/>
+  </svg>
+)
+
 const NAV_ITEMS = [
-  { href: '/admin/dashboard', label: 'Agenda',   Icon: CalendarIcon },
-  { href: '/admin/clients',   label: 'Clientes', Icon: UsersIcon },
-  { href: '/admin/schedule',  label: 'Horario',  Icon: ClockIcon },
-  { href: '/admin/settings',  label: 'Ajustes',  Icon: SettingsIcon },
+  { href: '/admin/dashboard',  label: 'Agenda',    Icon: CalendarIcon },
+  { href: '/admin/clients',    label: 'Clientes',  Icon: UsersIcon },
+  { href: '/admin/schedule',   label: 'Horario',   Icon: ClockIcon },
+  { href: '/admin/comercial',  label: 'Comercial', Icon: TagIcon },
+  { href: '/admin/settings',   label: 'Ajustes',   Icon: SettingsIcon },
 ]
 
 export default function AdminNav() {
