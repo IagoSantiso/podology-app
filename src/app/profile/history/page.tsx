@@ -34,7 +34,7 @@ function HistoryContent() {
       const { data } = await supabase
         .from('appointments')
         .select('id, appointment_date, services(name, price), visit_history(clinical_notes, treatment_name, treatment_instructions)')
-        .eq('client_user_id', user.id)
+        .or(`client_user_id.eq.${user.id},client_email.eq.${user.email}`)
         .neq('status', 'cancelled')
         .order('appointment_date', { ascending: false })
 

@@ -101,17 +101,24 @@ export default function ClientsPage() {
                   style={{ background: 'var(--card)', border: '1px solid var(--line)' }}>
 
                   {/* Client header row */}
-                  <button
+                  <div
                     onClick={() => setExpanded(isOpen ? null : client.email)}
-                    className="w-full p-4 flex items-center gap-3 text-left"
+                    className="w-full p-4 flex items-center gap-3 cursor-pointer select-none"
                   >
                     <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
                       style={{ background: 'var(--primary-soft)', color: 'var(--primary)' }}>
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }}>{client.name}</p>
-                      <p className="text-xs truncate" style={{ color: 'var(--ink-3)' }}>{client.phone}</p>
+                      <p className="font-semibold text-sm truncate" style={{ color: 'var(--ink)' }} title={client.name}>{client.name}</p>
+                      <a
+                        href={`tel:${client.phone}`}
+                        className="text-xs transition-opacity hover:opacity-70"
+                        style={{ color: 'var(--ink-3)' }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        {client.phone}
+                      </a>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="text-right">
@@ -131,12 +138,26 @@ export default function ClientsPage() {
                         <polyline points="6 9 12 15 18 9"/>
                       </svg>
                     </div>
-                  </button>
+                  </div>
 
                   {/* Appointment list */}
                   {isOpen && (
                     <div className="px-4 pb-3 pt-0" style={{ borderTop: '1px solid var(--line-2)' }}>
-                      <p className="text-xs py-2.5" style={{ color: 'var(--ink-3)' }}>{client.email}</p>
+                      {/* Contact card */}
+                      <div className="py-3 flex flex-col gap-1" style={{ borderBottom: '1px solid var(--line-2)' }}>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>{client.name}</p>
+                        <a
+                          href={`tel:${client.phone}`}
+                          className="text-sm font-medium flex items-center gap-1.5 transition-opacity hover:opacity-70"
+                          style={{ color: 'var(--primary)' }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 10.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 7.91a16 16 0 0 0 5.18 5.18l.95-.95a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 20.9 14H22a2 2 0 0 1 2 2z"/>
+                          </svg>
+                          {client.phone}
+                        </a>
+                        <p className="text-xs" style={{ color: 'var(--ink-3)' }}>{client.email}</p>
+                      </div>
                       <div className="flex flex-col gap-0.5">
                         {client.appointments.map(apt => {
                           const vh = apt.visit_history?.[0] ?? null
