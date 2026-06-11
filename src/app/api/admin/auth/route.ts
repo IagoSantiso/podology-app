@@ -39,8 +39,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  const supabase = await createSupabaseServer()
-  await supabase.auth.signOut()
   const res = NextResponse.json({ ok: true })
   res.cookies.delete('admin_session')
   return res
