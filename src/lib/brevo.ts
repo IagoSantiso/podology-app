@@ -564,3 +564,24 @@ export async function sendReminderEmailSecond(data: AppointmentEmailData) {
     html,
   })
 }
+
+export async function sendPasswordResetEmail({ email, resetUrl }: { email: string; resetUrl: string }) {
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+      <h2 style="color:#2f7d6e;margin-bottom:8px;">Recuperar contraseña</h2>
+      <p style="color:#4a5b58;">Has solicitado restablecer la contraseña del panel de administración.</p>
+      <p style="color:#4a5b58;">Haz clic en el botón (válido durante <strong>1 hora</strong>):</p>
+      <a href="${resetUrl}"
+        style="display:inline-block;background:#2f7d6e;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;margin:20px 0;">
+        Restablecer contraseña
+      </a>
+      <p style="color:#7c8b88;font-size:12px;margin-top:24px;">Si no has solicitado esto, ignora este correo.</p>
+    </div>
+  `
+  return sendEmail({
+    to: email,
+    toName: 'Admin',
+    subject: 'Recuperar contraseña — Panel de administración',
+    html,
+  })
+}

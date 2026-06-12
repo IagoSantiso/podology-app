@@ -35,6 +35,7 @@ export default function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false)
   const [logoError, setLogoError] = useState('')
   const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passError, setPassError] = useState('')
@@ -81,15 +82,21 @@ export default function SettingsPage() {
 
   async function changePassword() {
     setPassError('')
-    if (!newPassword || newPassword.length < 4) { setPassError('Mínimo 4 caracteres'); return }
+    if (!currentPassword) { setPassError('Introduce la contraseña actual'); return }
+    if (!newPassword || newPassword.length < 6) { setPassError('Mínimo 6 caracteres'); return }
     if (newPassword !== confirmPassword) { setPassError('Las contraseñas no coinciden'); return }
-    const res = await fetch('/api/admin/config', {
-      method: 'PUT',
+    const res = await fetch('/api/admin/change-password', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admin_password: newPassword }),
+      body: JSON.stringify({ currentPassword, newPassword }),
     })
-    if (!res.ok) { setPassError('Error al cambiar la contraseña'); return }
-    setNewPassword(''); setConfirmPassword(''); setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setPassError(data.error ?? 'Error al cambiar la contraseña')
+      return
+    }
+    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+    setPassSaved(true); setTimeout(() => setPassSaved(false), 2000)
   }
 
   async function requestNotif() { const p = await Notification.requestPermission(); setNotifPermission(p) }
@@ -238,12 +245,17 @@ export default function SettingsPage() {
 
             {/* Cambiar contraseña */}
             <AdvSection title="Cambiar contraseña">
-              <SmallField label="Nueva contraseña">
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Mín. 4 caracteres"
+              <SmallField label="Contraseña actual">
+                <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
                   className={SMALL_INPUT} style={{ background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--ink)' }}/>
               </SmallField>
-              <SmallField label="Repetir">
+              <SmallField label="Nueva contraseña">
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Mín. 6 caracteres"
+                  className={SMALL_INPUT} style={{ background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--ink)' }}/>
+              </SmallField>
+              <SmallField label="Repetir nueva contraseña">
                 <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                   className={SMALL_INPUT} style={{ background: 'var(--field)', border: '1px solid var(--line)', color: 'var(--ink)' }}/>
               </SmallField>

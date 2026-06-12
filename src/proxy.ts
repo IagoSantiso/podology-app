@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
-  if (pathname === '/api/admin/auth' || pathname === '/api/admin/reset-password') {
+  if (
+    pathname === '/api/admin/auth' ||
+    pathname === '/api/admin/reset-password' ||
+    pathname === '/api/admin/update-password'
+  ) {
     return NextResponse.next()
   }
 
