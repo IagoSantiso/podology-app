@@ -121,7 +121,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .gt('remaining_sessions', 0)
         .order('purchased_at', { ascending: true })
         .limit(1)
-      if (rows && rows.length > 0) matchedBono = rows[0] as typeof matchedBono
+      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as typeof matchedBono
     }
 
     if (!matchedBono && data.client_phone) {
@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .gt('remaining_sessions', 0)
         .order('purchased_at', { ascending: true })
         .limit(1)
-      if (rows && rows.length > 0) matchedBono = rows[0] as typeof matchedBono
+      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as typeof matchedBono
     }
 
     if (matchedBono) {
