@@ -93,7 +93,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   // ── Side-effects ──────────────────────────────────────────────────────────
 
-  // 1. Completion → visit_history
+  // 1. Completion → visit_history + auto-deduct bono session
+  let bonoDeducted: { clientBonoId: string; bonoName: string; remainingSessions: number } | null = null
+
   if (body.status === 'completed' && data) {
     await supabase.from('visit_history').insert({
       appointment_id:          data.id,
@@ -106,6 +108,46 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       treatment_instructions:  body.treatment_instructions ?? null,
       podologist_notes:        body.podologist_notes ?? null,
     })
+
+    // Auto-deduct: look for active client_bono by email, then by phone
+    let matchedBono: { id: string; remaining_sessions: number; bonos: { name: string } | null } | null = null
+
+    if (data.client_email && data.client_email !== FAKE_EMAIL) {
+      const { data: rows } = await supabase
+        .from('client_bonos')
+        .select('id, remaining_sessions, bonos(name)')
+        .eq('client_email', data.client_email)
+        .eq('is_active', true)
+        .gt('remaining_sessions', 0)
+        .order('purchased_at', { ascending: true })
+        .limit(1)
+      if (rows && rows.length > 0) matchedBono = rows[0] as typeof matchedBono
+    }
+
+    if (!matchedBono && data.client_phone) {
+      const { data: rows } = await supabase
+        .from('client_bonos')
+        .select('id, remaining_sessions, bonos(name)')
+        .eq('client_phone', data.client_phone)
+        .eq('is_active', true)
+        .gt('remaining_sessions', 0)
+        .order('purchased_at', { ascending: true })
+        .limit(1)
+      if (rows && rows.length > 0) matchedBono = rows[0] as typeof matchedBono
+    }
+
+    if (matchedBono) {
+      const newRemaining = matchedBono.remaining_sessions - 1
+      await supabase
+        .from('client_bonos')
+        .update({ remaining_sessions: newRemaining, is_active: newRemaining > 0 })
+        .eq('id', matchedBono.id)
+      bonoDeducted = {
+        clientBonoId: matchedBono.id,
+        bonoName: (matchedBono.bonos as { name: string } | null)?.name ?? 'Bono',
+        remainingSessions: newRemaining,
+      }
+    }
   }
 
   const hasEmail = current.client_email && current.client_email !== FAKE_EMAIL
@@ -161,5 +203,5 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  return NextResponse.json({ appointment: data, ...(emailWarning && { emailWarning }) })
+  return NextResponse.json({ appointment: data, ...(emailWarning && { emailWarning }), ...(bonoDeducted && { bonoDeducted }) })
 }

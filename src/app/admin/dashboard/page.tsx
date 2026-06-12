@@ -166,6 +166,11 @@ export default function DashboardPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (data.emailWarning) showToast(data.emailWarning)
+    if (data.bonoDeducted) {
+      showToast(
+        `Sesion descontada del bono "${data.bonoDeducted.bonoName}". Quedan ${data.bonoDeducted.remainingSessions} sesiones.`
+      )
+    }
     await loadDay(); await loadWeek()
     setActionLoading(false)
   }
