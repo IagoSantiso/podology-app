@@ -110,7 +110,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     })
 
     // Auto-deduct: look for active client_bono by email, then by phone
-    let matchedBono: { id: string; remaining_sessions: number; bonos: { name: string } | null } | null = null
+    type MatchedBono = { id: string; remaining_sessions: number; bonos: { name: string } | null }
+    let matchedBono: MatchedBono | null = null
 
     if (data.client_email && data.client_email !== FAKE_EMAIL) {
       const { data: rows } = await supabase
@@ -121,7 +122,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .gt('remaining_sessions', 0)
         .order('purchased_at', { ascending: true })
         .limit(1)
-      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as typeof matchedBono
+      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as MatchedBono
     }
 
     if (!matchedBono && data.client_phone) {
@@ -133,7 +134,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .gt('remaining_sessions', 0)
         .order('purchased_at', { ascending: true })
         .limit(1)
-      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as typeof matchedBono
+      if (rows && rows.length > 0) matchedBono = rows[0] as unknown as MatchedBono
     }
 
     if (matchedBono) {

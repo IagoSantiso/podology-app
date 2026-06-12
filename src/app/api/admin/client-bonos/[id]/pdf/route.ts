@@ -81,7 +81,7 @@ export async function GET(
   // "VALE DE BONO" pill on right
   p1.drawRectangle({
     x: MR - 110, y: H - 70, width: 110, height: 26,
-    color: WHITE, borderRadius: 4,
+    color: WHITE,
   })
   p1.drawText('VALE DE BONO', {
     x: MR - 100, y: H - 60, size: 9, font: bold, color: PRIMARY,
@@ -150,7 +150,6 @@ export async function GET(
     x: ML, y: 65, width: 200, height: 60,
     color: rgb(0.97, 0.97, 0.97),
     borderColor: LINE, borderWidth: 0.75,
-    borderRadius: 4,
   })
   p1.drawText('SELLO / FIRMA', { x: ML + 10, y: 107, size: 7.5, font: bold, color: INK3 })
 
