@@ -22,7 +22,6 @@ export async function PUT(req: NextRequest) {
     'business_name', 'business_address', 'owner_email', 'logo_url',
     'reschedule_cutoff_hours', 'reminder_first_hours', 'reminder_second_hours',
     'owner_name', 'nif', 'address', 'contact_email', 'data_retention_years',
-    'admin_password',
   ]
 
   const updates: Record<string, unknown> = { id: 1 }

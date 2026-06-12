@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdmin } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json()
@@ -9,21 +8,14 @@ export async function POST(req: NextRequest) {
   }
 
   const adminEmail = process.env.ADMIN_EMAIL
-  if (email.trim() !== adminEmail) {
-    return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
-  }
+  const adminPassword = process.env.ADMIN_PASSWORD
 
-  // Leer contraseña actual desde la DB; si aún no se ha configurado, usar env var como fallback
-  const supabase = createSupabaseAdmin()
-  const { data } = await supabase
-    .from('podologist_config')
-    .select('admin_password')
-    .eq('id', 1)
-    .single()
-
-  const validPassword = data?.admin_password ?? process.env.ADMIN_PASSWORD
-
-  if (!validPassword || password !== validPassword) {
+  if (
+    !adminEmail ||
+    !adminPassword ||
+    email.trim() !== adminEmail ||
+    password !== adminPassword
+  ) {
     return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
   }
 
@@ -32,7 +24,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 30,
     path: '/',
   })
   return res
